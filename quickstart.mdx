@@ -1,97 +1,129 @@
 ---
-title: 'Quickstart'
-description: 'Start building awesome documentation in under 5 minutes'
+title: 'Quick Start'
+description: 'Get up and running with Superline Agent Detection in minutes'
 ---
 
-## Setup your development
+## Getting Started
 
-Learn how to update your docs locally and deploy them to the public.
+Superline Agent Detection is designed to be easy to integrate into any web application. This quick start guide will help you get up and running in minutes.
 
-### Edit and preview
+### Installation
 
-<AccordionGroup>
-  <Accordion icon="github" title="Clone your docs locally">
-    During the onboarding process, we created a repository on your Github with
-    your docs content. You can find this repository on our
-    [dashboard](https://dashboard.mintlify.com). To clone the repository
-    locally, follow these
-    [instructions](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository)
-    in your terminal.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Preview changes">
-    Previewing helps you make sure your changes look as intended. We built a
-    command line interface to render these changes locally. 
-    1. Install the
-    [Mintlify CLI](https://www.npmjs.com/package/mintlify) to preview the
-    documentation changes locally with this command: ``` npm i -g mintlify ```
-    2. Run the following command at the root of your documentation (where
-    `docs.json` is): ``` mintlify dev ```
-    <Note>
-      If you’re currently using the legacy ```mint.json``` configuration file, please update the Mintlify CLI:
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @superline-ai/agent-detection
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @superline-ai/agent-detection
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @superline-ai/agent-detection
+    ```
+  </Tab>
+  <Tab title="Script Tag">
+    ```html
+    <!-- Add the script with defer attribute -->
+    <script src="https://cdn.jsdelivr.net/npm/@superline-ai/agent-detection/dist/umd/index.umd.js" defer></script>
+    ```
+  </Tab>
+</Tabs>
 
+### Basic Usage
 
-      ```npm i -g mintlify@latest```
-      And run the new upgrade command in your docs repository:
+<Tabs>
+  <Tab title="ES Modules">
+    ```javascript
+    import AgentDetector from '@superline-ai/agent-detection';
+    // Assuming providers are imported/created:
+    // const metadataProvider = new BrowserMetadataProvider();
+    // const eventsProvider = new BrowserEventProvider();
+    const detector = new AgentDetector(metadataProvider, eventsProvider);
 
-      ```mintlify upgrade```
-      You should now be using the new ```docs.json``` configuration file. Feel free to delete the ```mint.json``` file from your repository.
-    </Note>
-  </Accordion>
-</AccordionGroup>
+    // Initialize the detector
+    AgentDetector.init({
+      debug: false,
+      autoStart: true,
+      threshold: 0.6 // Optional: Set custom detection threshold (default: 0.5)
+    });
 
-### Deploy your changes
+    // Later, when you want to check if the session is from an agent
+    const result = await detector.finalizeDetection();
+    console.log('Is agent:', result.isAgent, 'Confidence:', result.confidence);
+    ```
+  </Tab>
+  <Tab title="Script Tag">
+    ```html
+    <script defer>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Assuming providers are globally available or created
+        // const metadataProvider = new BrowserMetadataProvider();
+        // const eventsProvider = new BrowserEventProvider();
+        // The library instance needs to be created manually
+        const detector = new AgentDetector(metadataProvider, eventsProvider);
+        
+        // Initialize it
+        AgentDetector.init({
+          debug: false,
+          autoStart: true,
+          threshold: 0.6 // Optional: Set custom detection threshold (default: 0.5)
+        });
+        
+        // Later, check if the session is from an agent
+        detector.finalizeDetection()
+          .then(result => {
+            console.log('Is agent:', result.isAgent, 'Confidence:', result.confidence);
+          });
+      });
+    </script>
+    ```
+  </Tab>
+</Tabs>
 
-<AccordionGroup>
+## Integration with Analytics
 
-<Accordion icon="message-bot" title="Install our Github app">
-  Our Github app automatically deploys your changes to your docs site, so you
-  don't need to manage deployments yourself. You can find the link to install on
-  your [dashboard](https://dashboard.mintlify.com). Once the bot has been
-  successfully installed, there should be a check mark next to the commit hash
-  of the repo.
-</Accordion>
-<Accordion icon="rocket" title="Push your changes">
-  [Commit and push your changes to
-  Git](https://docs.github.com/en/get-started/using-git/pushing-commits-to-a-remote-repository#about-git-push)
-  for your changes to update in your docs site. If you push and don't see that
-  the Github app successfully deployed your changes, you can also manually
-  update your docs through our [dashboard](https://dashboard.mintlify.com).
-</Accordion>
+You can easily integrate Superline Agent Detection with your analytics platform to differentiate between humans and AI agents in your metrics.
 
-</AccordionGroup>
+```javascript
+// After getting the detection result
+const result = await detector.finalizeDetection();
 
-## Update your docs
+// Example with Google Analytics 4
+gtag('set', 'user_properties', {
+  is_agent: result.isAgent,
+  agent_confidence: result.confidence
+});
 
-Add content directly in your files with MDX syntax and React components. You can use any of our components, or even build your own.
+// Example with Mixpanel
+mixpanel.people.set({
+  'Is Agent': result.isAgent,
+  'Agent Confidence': result.confidence
+});
+```
 
-<CardGroup>
-
-<Card title="Add Content With MDX" icon="file" href="/essentials/markdown">
-  Add content to your docs with MDX syntax.
+<Card title="Analytics Integrations" icon="chart-line" href="/guides/google-analytics">
+  Learn more about integrating with analytics platforms like Google Analytics and Mixpanel
 </Card>
 
-<Card
-  title="Add Code Blocks"
-  icon="square-code"
-  href="/essentials/code"
->
-  Add code directly to your docs with syntax highlighting.
-</Card>
+## Next Steps
 
-<Card
-  title="Add Images"
-  icon="image"
-  href="/essentials/images"
->
-  Add images to your docs to make them more engaging.
-</Card>
-
-<Card
-  title="Add Custom Components"
-  icon="puzzle-piece"
-  href="/essentials/reusable-snippets"
->
-  Add templates to your docs to make them more reusable.
-</Card>
-
+<CardGroup cols={2}>
+  <Card
+    title="Core Concepts"
+    icon="brain"
+    href="/core-concepts/overview"
+  >
+    Learn about the detection model and feature extraction system
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference/agent-detector"
+  >
+    Explore the complete API reference
+  </Card>
 </CardGroup>

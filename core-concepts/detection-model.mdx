@@ -1,0 +1,122 @@
+---
+title: 'Detection Model'
+description: 'Understanding the AI agent detection model'
+---
+
+# Detection Model
+
+The Superline Agent Detection library uses a logistic regression model to classify browser sessions as either human or AI agent. This page explains how the model works and processes features to generate detection results.
+
+## Model Architecture
+
+Superline Agent Detection uses a logistic regression model, which is:
+
+- **Lightweight**: The model has minimal computational requirements and can run entirely in the browser
+- **Interpretable**: The model's decision process can be understood and traced back to specific features
+- **Efficient**: The detection process completes in milliseconds, even on lower-end devices
+- **Privacy-preserving**: All detection happens locally, with no data sent to external servers
+
+<Callout type="info">
+  Logistic regression is a statistical model used for binary classification tasks. It calculates the probability of a binary outcome based on one or more predictor variables.
+</Callout>
+
+## Model Components
+
+The detection model consists of the following key components:
+
+### Model Parameters
+
+```javascript
+// Simplified representation of model parameters
+{
+  weights: {
+    feature1: 0.85,
+    feature2: -0.32,
+    // ... other feature weights
+  },
+  bias: -0.75,
+}
+```
+
+- **Weights**: Coefficients that determine the importance of each feature
+- **Bias**: The base value (intercept) before any feature contributions
+- **Threshold**: The cutoff value for classification is hardcoded to 0.5 in the scoring logic
+
+### Scoring Algorithm
+
+The model applies the following steps to generate a detection confidence:
+
+<Steps>
+  <Step title="Feature Preprocessing">
+    Raw features are preprocessed through:
+    - Standardization (converting to z-scores)
+    - Normalization (scaling to 0-1 range)
+    - One-hot encoding for categorical variables
+  </Step>
+  <Step title="Linear Combination">
+    The model calculates a weighted sum of all features:
+    ```
+    z = bias + (weight1 * feature1) + (weight2 * feature2) + ...
+    ```
+  </Step>
+  <Step title="Sigmoid Transformation">
+    The weighted sum is transformed through the sigmoid function to produce a probability between 0 and 1:
+    ```
+    probability = 1 / (1 + e^(-z))
+    ```
+  </Step>
+  <Step title="Classification">
+    The probability is compared to the threshold:
+    - If probability ≥ threshold: Classified as AI agent
+    - If probability < threshold: Classified as human
+  </Step>
+</Steps>
+
+## Training Process
+
+While the model training happens offline, understanding the process helps you appreciate how the detection works:
+
+1. **Data Collection**: Hundreds of thousands of labeled browser sessions from both humans and AI agents
+2. **Feature Engineering**: Identifying the most discriminative features for detection
+3. **Model Training**: Using standard machine learning techniques to optimize the model
+4. **Validation**: Testing the model against new, unseen data to ensure accuracy
+5. **Parameter Tuning**: Fine-tuning the model to balance precision and recall
+
+<Note>
+  The library is shipped with pre-trained model parameters, so you don't need to perform any training yourself.
+</Note>
+
+## Model Performance
+
+The current model achieves:
+
+- **Accuracy**: Greater than 95% on validation data
+- **False Positive Rate**: Less than 3% (humans mistakenly identified as agents)
+- **False Negative Rate**: Less than 5% (agents mistakenly identified as humans)
+
+<Callout type="warning">
+  Model performance may vary depending on the specific context and user behavior patterns on your website. Real-world performance might differ from controlled test environments.
+</Callout>
+
+## Model Updates
+
+The detection model is continuously improved based on new data and insights. Library updates may include new model parameters with enhanced detection capabilities. Always use the latest version to benefit from these improvements.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Feature Extraction"
+    icon="filter"
+    href="/core-concepts/feature-extraction"
+  >
+    Learn how features are extracted and processed
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference/agent-detector"
+  >
+    Explore the complete API reference
+  </Card>
+</CardGroup> 

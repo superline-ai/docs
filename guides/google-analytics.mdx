@@ -1,0 +1,291 @@
+---
+title: 'Google Analytics Integration'
+description: 'How to integrate Superline Agent Detection with Google Analytics'
+---
+
+# Integrating with Google Analytics
+
+This guide will show you how to integrate Superline Agent Detection with Google Analytics 4 (GA4) to segment your data and metrics based on whether users are humans or AI agents.
+
+## Why Separate Human and AI Traffic
+
+Analytics data is most valuable when it accurately reflects how humans interact with your site. With the growing prevalence of AI agents browsing the web, your analytics may be skewed by non-human traffic, leading to:
+
+- Inaccurate conversion rates
+- Misleading engagement metrics
+- Skewed A/B test results
+- Distorted user behavior analysis
+
+By identifying and segmenting AI agent traffic using Superline Agent Detection, you can maintain clean analytics data that accurately represents human behavior.
+
+## Integration Steps
+
+<Steps>
+  <Step title="Install Superline Agent Detection">
+    First, install the Superline Agent Detection library:
+    
+    ```bash
+    npm install @superline-ai/agent-detection
+    ```
+    
+    or use a script tag:
+    
+    ```html
+    <script src="https://cdn.jsdelivr.net/npm/@superline-ai/agent-detection/dist/umd/index.umd.js" defer></script>
+    ```
+  </Step>
+  
+  <Step title="Initialize Both Libraries">
+    Make sure both GA4 and Superline Agent Detection are initialized early in your application lifecycle:
+    
+    ```javascript
+    // Initialize Google Analytics (GA4)
+    // This assumes you've already added the GA4 snippet to your site
+    
+    // Initialize Superline Agent Detection
+    import AgentDetector from '@superline-ai/agent-detection';
+    // Assuming providers are imported/created:
+    // import { BrowserMetadataProvider, BrowserEventProvider } from '...' 
+    // const metadataProvider = new BrowserMetadataProvider();
+    // const eventsProvider = new BrowserEventProvider();
+    
+    const detector = new AgentDetector(metadataProvider, eventsProvider);
+    AgentDetector.init({
+      debug: false,
+      autoStart: true
+    });
+    ```
+  </Step>
+  
+  <Step title="Detect AI Agents and Send to GA4">
+    After allowing sufficient time for data collection (typically a few seconds), check if the current session is from an AI agent and send this information to GA4:
+    
+    ```javascript
+    // Wait for enough interaction data to be collected
+    setTimeout(async () => {
+      // Get detection result
+      const result = await detector.finalizeDetection();
+      
+      // Set user property in GA4
+      gtag('set', 'user_properties', {
+        is_agent: result.isAgent,
+        agent_confidence: result.confidence
+      });
+      
+      // Log a custom event (optional)
+      gtag('event', 'agent_detection_complete', {
+        is_agent: result.isAgent,
+        agent_confidence: result.confidence
+      });
+    }, 5000);  // 5 seconds delay
+    ```
+  </Step>
+  
+  <Step title="Create Custom Dimensions in GA4">
+    In your Google Analytics 4 property:
+    
+    1. Go to **Admin** > **Custom definitions** > **Create custom dimensions**
+    2. Create two custom dimensions:
+       - Name: "Is Agent", Scope: "User", User property: "is_agent"
+       - Name: "Agent Confidence", Scope: "User", User property: "agent_confidence"
+  </Step>
+  
+  <Step title="Create Segments for Analysis">
+    Create segments to analyze human vs. AI traffic separately:
+    
+    1. Go to any report in GA4
+    2. Click the "+" button in the segments section
+    3. Create two segments:
+       - Human Users: Add condition where "Is Agent" equals "false"
+       - AI Agents: Add condition where "Is Agent" equals "true"
+  </Step>
+</Steps>
+
+## Comprehensive Implementation Example
+
+Here's a complete example that handles various scenarios:
+
+```javascript
+// Main analytics integration module
+import AgentDetector from '@superline-ai/agent-detection';
+// Assuming providers are imported/created:
+// import { BrowserMetadataProvider, BrowserEventProvider } from '...' 
+
+let detector = null; // Hold detector instance
+
+export function initializeAnalytics() {
+  // Assuming providers are available in this scope
+  const metadataProvider = new BrowserMetadataProvider(); // Example
+  const eventsProvider = new BrowserEventProvider(); // Example
+  detector = new AgentDetector(metadataProvider, eventsProvider);
+
+  // Early initialization of agent detection
+  AgentDetector.init({ autoStart: true });
+  
+  // Set up detection after sufficient interaction
+  const detectionTimeout = setTimeout(async () => {
+    try {
+      await detectAndSendToGA();
+    } catch (error) {
+      console.error('Error during agent detection:', error);
+      // Send fallback event in case of error
+      gtag('event', 'agent_detection_error');
+    }
+  }, 5000);
+  
+  // Ensure detection happens before page unload if possible
+  window.addEventListener('beforeunload', async () => {
+    clearTimeout(detectionTimeout);
+    await detectAndSendToGA();
+  });
+}
+
+async function detectAndSendToGA() {
+  // Check if GA is available
+  if (typeof gtag !== 'function') {
+    console.warn('Google Analytics not available');
+    return;
+  }
+  
+  // Ensure detector is initialized
+  if (!detector) {
+    console.warn('AgentDetector not initialized');
+    return;
+  }
+
+  // Get detection result
+  const result = await detector.finalizeDetection();
+  
+  // Set user properties
+  gtag('set', 'user_properties', {
+    is_agent: result.isAgent,
+    agent_confidence: result.confidence
+  });
+  
+  // Log detection event
+  gtag('event', 'agent_detection_complete', {
+    is_agent: result.isAgent,
+    agent_confidence: result.confidence
+  });
+  
+  // Optionally mark certain events differently for agents
+  if (result.isAgent) {
+    // Override the original gtag function to mark subsequent events
+    const originalGtag = window.gtag;
+    window.gtag = function(command, ...args) {
+      if (command === 'event') {
+        // Add agent information to all events
+        const eventName = args[0];
+        const params = args[1] || {};
+        params.from_agent = true;
+        originalGtag(command, eventName, params);
+      } else {
+        // Pass through other commands unchanged
+        originalGtag(command, ...args);
+      }
+    };
+  }
+}
+```
+
+## Advanced Analytics Options
+
+<AccordionGroup>
+  <Accordion title="Using Probability/Confidence">
+    Instead of a simple boolean, you can use the continuous confidence for more nuanced analysis:
+    
+    ```javascript
+    // Create segments based on score ranges
+    gtag('set', 'user_properties', {
+      agent_probability: result.confidence,
+      agent_category: result.confidence < 0.3 ? 'likely_human' :
+                      result.confidence < 0.7 ? 'uncertain' : 'likely_agent'
+    });
+    ```
+    
+    This allows you to create segments for "likely human," "uncertain," and "likely agent" categories.
+  </Accordion>
+  
+  <Accordion title="A/B Testing Considerations">
+    When running A/B tests, you can:
+    
+    1. Exclude AI agents from tests entirely
+    2. Stratify your analysis to compare human-only results
+    3. Run tests specifically targeting differences in human vs. AI behavior
+    
+    ```javascript
+    // Example: Only include non-agents in experiment
+    const result = await detector.finalizeDetection();
+    
+    if (!result.isAgent) {
+      // Enroll in experiment
+      gtag('event', 'experiment_view', {
+        experiment_id: 'homepage_redesign'
+      });
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Real-time Notification">
+    Set up real-time alerts for significant AI agent traffic:
+    
+    ```javascript
+    // Log high-confidence agent detections
+    const result = await detector.finalizeDetection();
+    if (result.isAgent && result.confidence > 0.9) { 
+      gtag('event', 'high_confidence_agent_visit', {
+        page_path: window.location.pathname,
+        agent_confidence: result.confidence
+      });
+    }
+    ```
+    
+    Then configure GA4 to alert you when these events occur at an unusual rate.
+  </Accordion>
+</AccordionGroup>
+
+## Analyzing the Data
+
+Once integrated, you can use GA4's reporting tools to gain insights such as:
+
+<CardGroup cols={2}>
+  <Card title="Conversion Rate Differences" icon="chart-line">
+    Compare conversion rates between human users and AI agents to understand how bots might be skewing your metrics.
+  </Card>
+  <Card title="Navigation Patterns" icon="route">
+    Identify differences in page flow and navigation patterns between humans and AI agents.
+  </Card>
+  <Card title="Engagement Metrics" icon="clock">
+    Compare session duration, pages per session, and bounce rates to understand how agent traffic differs from human traffic.
+  </Card>
+  <Card title="Feature Usage" icon="puzzle-piece">
+    Determine if AI agents interact with certain features of your site differently than humans.
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+1. **Delay Initial Collection**: Allow at least 3-5 seconds of interaction before finalizing detection for better accuracy
+2. **Review Confidence Distribution**: Analyze the `agent_confidence` distribution in GA4 instead of relying solely on `is_agent`
+3. **Review Regularly**: Monitor the proportion of AI traffic over time to spot trends
+4. **Create Comparative Reports**: Set up reports that compare key metrics between human and AI segments
+5. **Adjust Threshold Based on Needs**: Depending on your tolerance for false positives vs. false negatives, adjust your reporting threshold based on the `agent_confidence`, or use the `threshold` init option.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Mixpanel Integration"
+    icon="chart-mixed"
+    href="/guides/mixpanel"
+  >
+    Learn how to integrate with Mixpanel
+  </Card>
+  <Card
+    title="Custom Analytics"
+    icon="gear"
+    href="/guides/custom-analytics"
+  >
+    Integrate with other analytics platforms
+  </Card>
+</CardGroup> 

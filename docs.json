@@ -1,49 +1,49 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Superline AI",
   "colors": {
     "primary": "#1a94a3",
     "light": "#1fb9cc",
     "dark": "#14717D"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.png",
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
             "group": "Get Started",
-            "pages": ["index", "quickstart", "development"]
+            "pages": ["index", "quickstart", "installation"]
           },
           {
-            "group": "Essentials",
+            "group": "Core Concepts",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/settings",
-              "essentials/navigation",
-              "essentials/reusable-snippets"
+              "core-concepts/overview",
+              "core-concepts/detection-model",
+              "core-concepts/feature-extraction"
+            ]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "api-reference/agent-detector",
+              "api-reference/detection-result",
+              "api-reference/configuration"
             ]
           }
         ]
       },
       {
-        "tab": "API Reference",
+        "tab": "Guides",
         "groups": [
           {
-            "group": "API Documentation",
-            "pages": ["api-reference/introduction"]
-          },
-          {
-            "group": "Endpoint Examples",
+            "group": "Analytics Integration",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "guides/google-analytics",
+              "guides/mixpanel",
+              "guides/custom-analytics"
             ]
           }
         ]
@@ -52,14 +52,9 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
           "anchor": "Community",
-          "href": "https://mintlify.com/community",
-          "icon": "slack"
+          "href": "https://discord.gg/CnXvWasZ",
+          "icon": "discord"
         },
         {
           "anchor": "Blog",
@@ -82,15 +77,14 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Join Discord",
+      "href": "https://discord.gg/CnXvWasZ"
     }
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/superline-ai/agent-detection",
+      "discord": "https://discord.gg/CnXvWasZ"
     }
   }
 }

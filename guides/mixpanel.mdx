@@ -1,0 +1,480 @@
+---
+title: 'Mixpanel Integration'
+description: 'How to integrate Superline Agent Detection with Mixpanel'
+---
+
+# Integrating with Mixpanel
+
+This guide shows you how to integrate Superline Agent Detection with Mixpanel to distinguish between human and AI agent traffic in your analytics data.
+
+## Why Segment AI Agent Data in Mixpanel
+
+Mixpanel is powerful for understanding user behavior and funnels, but AI agents can distort your insights by:
+
+- Inflating engagement metrics
+- Creating misleading user journey patterns
+- Skewing conversion funnels and rates
+- Distorting cohort analysis
+
+By integrating Superline Agent Detection with Mixpanel, you can:
+
+- Filter out or separately analyze AI agent traffic
+- Compare behavior patterns between humans and AI agents
+- Create more accurate funnels based on human-only traffic
+- Make data-driven decisions based on actual human behavior
+
+## Integration Steps
+
+<Steps>
+  <Step title="Install Required Libraries">
+    Install both Mixpanel and Superline Agent Detection:
+    
+    ```bash
+    npm install mixpanel-browser @superline-ai/agent-detection
+    ```
+    
+    If you're using script tags instead:
+    
+    ```html
+    <!-- Mixpanel -->
+    <script src="https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js"></script>
+    
+    <!-- Superline Agent Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@superline-ai/agent-detection/dist/umd/index.umd.js" defer></script>
+    ```
+  </Step>
+  
+  <Step title="Initialize Both Libraries">
+    Initialize both libraries early in your application:
+    
+    ```javascript
+    // Initialize Mixpanel
+    import mixpanel from 'mixpanel-browser';
+    mixpanel.init('YOUR_MIXPANEL_TOKEN', {
+      debug: process.env.NODE_ENV !== 'production'
+    });
+    
+    // Initialize Superline Agent Detection
+    import AgentDetector from '@superline-ai/agent-detection';
+    // Assuming providers are imported/created:
+    // const metadataProvider = new BrowserMetadataProvider();
+    // const eventsProvider = new BrowserEventProvider();
+    const detector = new AgentDetector(metadataProvider, eventsProvider);
+    AgentDetector.init({
+      debug: false,
+      autoStart: true
+    });
+    ```
+  </Step>
+  
+  <Step title="Detect and Register User Properties">
+    After collecting enough data for detection, register the result as a Mixpanel user property:
+    
+    ```javascript
+    // Wait for enough interaction data
+    setTimeout(async () => {
+      // Get detection result
+      const result = await detector.finalizeDetection();
+      
+      // Set Mixpanel user properties
+      mixpanel.people.set({
+        'Is Agent': result.isAgent,
+        'Agent Confidence': result.confidence
+      });
+      
+      // Track detection event (optional)
+      mixpanel.track('Agent Detection Complete', {
+        is_agent: result.isAgent,
+        agent_confidence: result.confidence
+      });
+      
+      // Set super properties for all future events
+      mixpanel.register({
+        'Is Agent': result.isAgent,
+        'Agent Confidence': result.confidence
+      });
+    }, 5000); // 5 seconds delay
+    ```
+  </Step>
+  
+  <Step title="Create Mixpanel Cohorts">
+    In your Mixpanel project:
+    
+    1. Go to **Data Management** > **Cohorts**
+    2. Create two cohorts:
+       - Human Users: where "Is Agent" equals "false"
+       - AI Agents: where "Is Agent" equals "true"
+  </Step>
+  
+  <Step title="Set Up Segmented Reports">
+    Create segmented reports to compare humans vs. AI agents:
+    
+    1. Create any report (Insights, Funnels, Flows, etc.)
+    2. Click "Add filter" or "Segment by"
+    3. Select "Is Agent" as the property
+    4. Compare "true" vs "false" values
+  </Step>
+</Steps>
+
+## Complete Integration Example
+
+Here's a comprehensive integration example that covers various scenarios:
+
+```javascript
+// mixpanel-agent-detection.js
+import mixpanel from 'mixpanel-browser';
+import AgentDetector from '@superline-ai/agent-detection';
+// Assuming providers are imported/created:
+// const metadataProvider = new BrowserMetadataProvider();
+// const eventsProvider = new BrowserEventProvider();
+
+let detector = null; // Hold detector instance
+
+export function initializeAnalytics(mixpanelToken) {
+  // Initialize Mixpanel
+  mixpanel.init(mixpanelToken, {
+    debug: process.env.NODE_ENV !== 'production',
+    track_pageview: true
+  });
+  
+  // Initialize Agent Detection
+  // Assuming providers are available in this scope
+  const metadataProvider = new BrowserMetadataProvider(); // Example
+  const eventsProvider = new BrowserEventProvider(); // Example
+  detector = new AgentDetector(metadataProvider, eventsProvider);
+  AgentDetector.init({ autoStart: true });
+  
+  // Set up detection after sufficient interaction
+  const detectionTimeout = setTimeout(async () => {
+    try {
+      await detectAndSendToMixpanel();
+    } catch (error) {
+      console.error('Agent detection error:', error);
+      // Track detection error
+      mixpanel.track('Agent Detection Error', {
+        error_message: error.message
+      });
+    }
+  }, 5000);
+  
+  // Attempt detection on page unload if not done yet
+  window.addEventListener('beforeunload', async () => {
+    clearTimeout(detectionTimeout);
+    await detectAndSendToMixpanel();
+  });
+  
+  return {
+    // Expose custom tracking method that includes agent info
+    track: (eventName, properties = {}) => {
+      // Get agent information if available
+      const agentInfo = mixpanel.get_property('Is Agent');
+      
+      // Only add agent props if detection has completed
+      if (agentInfo !== undefined) {
+        properties = {
+          ...properties,
+          is_agent: agentInfo
+        };
+      }
+      
+      // Track the event with agent information
+      mixpanel.track(eventName, properties);
+    }
+  };
+}
+
+async function detectAndSendToMixpanel() {
+  // Skip if already detected
+  if (mixpanel.get_property('Is Agent') !== undefined) {
+    return;
+  }
+  
+  // Ensure detector is initialized
+  if (!detector) {
+    console.warn('AgentDetector not initialized');
+    return;
+  }
+  
+  // Get detection result
+  const result = await detector.finalizeDetection();
+  
+  // Set Mixpanel user properties
+  mixpanel.people.set({
+    'Is Agent': result.isAgent,
+    'Agent Confidence': result.confidence,
+    'Agent Detection Time': new Date().toISOString()
+  });
+  
+  // Register super properties for all future events
+  mixpanel.register({
+    'Is Agent': result.isAgent,
+    'Agent Confidence': result.confidence
+  });
+  
+  // Track detection completion
+  mixpanel.track('Agent Detection Complete', {
+    is_agent: result.isAgent,
+    agent_confidence: result.confidence
+  });
+  
+  // Optionally identify distinct users/agents
+  if (!result.isAgent) {
+    // For human users, you might want to use your normal identifier
+    // mixpanel.identify(userId);
+  } else {
+    // For agents, you might want a special prefix
+    // mixpanel.identify(`agent_${sessionId}`);
+  }
+}
+```
+
+Usage of this module:
+
+```javascript
+// In your application entry point
+import { initializeAnalytics } from './mixpanel-agent-detection';
+
+const analytics = initializeAnalytics('YOUR_MIXPANEL_TOKEN');
+
+// Later, track events with automatic agent info
+analytics.track('Button Clicked', {
+  button_name: 'signup',
+  page: 'homepage'
+});
+```
+
+## Advanced Mixpanel Features
+
+<AccordionGroup>
+  <Accordion title="Funnel Analysis">
+    Create separate funnels for humans and AI agents:
+    
+    1. Go to **Funnels** in Mixpanel
+    2. Create your conversion funnel
+    3. Click "Segment by" and select "Is Agent"
+    4. Compare conversion rates between humans and AI agents
+    
+    This reveals how conversion paths differ between humans and AI agents, and gives you a more accurate picture of your true human conversion rate.
+  </Accordion>
+  
+  <Accordion title="Retention Analysis">
+    Compare retention metrics between humans and AI agents:
+    
+    1. Go to **Retention** in Mixpanel
+    2. Set up your retention analysis
+    3. Break down by "Is Agent"
+    
+    This helps identify if retention metrics are being skewed by recurring AI agents.
+  </Accordion>
+  
+  <Accordion title="JQL for Advanced Queries">
+    Use Mixpanel's JQL (JavaScript Query Language) to perform advanced analysis:
+    
+    ```javascript
+    function main() {
+      return Events({
+        from_date: '2023-01-01',
+        to_date: '2023-12-31'
+      })
+      .filter(function(event) {
+        // Only include events from human users
+        return event.properties['Is Agent'] === false;
+      })
+      .groupBy(['name'], mixpanel.reducer.count())
+      .orderBy('value', 'desc');
+    }
+    ```
+    
+    This allows for complex filtering and analysis based on the agent detection data.
+  </Accordion>
+</AccordionGroup>
+
+## Implementation Patterns
+
+<Tabs>
+  <Tab title="React">
+    ```jsx
+    // AgentDetectionProvider.jsx
+    import React, { createContext, useContext, useEffect, useState } from 'react';
+    import mixpanel from 'mixpanel-browser';
+    import AgentDetector from '@superline-ai/agent-detection';
+    
+    const AgentContext = createContext(null);
+    
+    export function AgentDetectionProvider({ children, mixpanelToken }) {
+      const [detectionResult, setDetectionResult] = useState(null);
+      const [isLoading, setIsLoading] = useState(true);
+      
+      useEffect(() => {
+        // Assuming providers are imported/created somewhere accessible
+        const metadataProvider = new BrowserMetadataProvider(); // Example
+        const eventsProvider = new BrowserEventProvider(); // Example
+        const detector = new AgentDetector(metadataProvider, eventsProvider);
+        
+        // Initialize both libraries
+        mixpanel.init(mixpanelToken);
+        AgentDetector.init({ autoStart: true });
+        
+        // Setup detection
+        const timer = setTimeout(async () => {
+          try {
+            const result = await detector.finalizeDetection();
+            setDetectionResult(result);
+            
+            // Send to Mixpanel
+            mixpanel.people.set({
+              'Is Agent': result.isAgent,
+              'Agent Confidence': result.confidence
+            });
+            
+            mixpanel.register({
+              'Is Agent': result.isAgent,
+              'Agent Confidence': result.confidence
+            });
+          } catch (error) {
+            console.error(error);
+          } finally {
+            setIsLoading(false);
+          }
+        }, 5000);
+        
+        return () => clearTimeout(timer);
+      }, [mixpanelToken]);
+      
+      const track = (eventName, props = {}) => {
+        if (detectionResult) {
+          props.is_agent = detectionResult.isAgent;
+        }
+        mixpanel.track(eventName, props);
+      };
+      
+      return (
+        <AgentContext.Provider value={{ 
+          detectionResult, 
+          isLoading, 
+          track 
+        }}>
+          {children}
+        </AgentContext.Provider>
+      );
+    }
+    
+    export const useAgentDetection = () => useContext(AgentContext);
+    ```
+    
+    Usage in components:
+    
+    ```jsx
+    import { useAgentDetection } from './AgentDetectionProvider';
+    
+    function SignupButton() {
+      const { track, detectionResult } = useAgentDetection();
+      
+      const handleClick = () => {
+        track('Signup Button Clicked');
+      };
+      
+      // Optionally render differently for agents
+      if (detectionResult?.isAgent) {
+        return <button onClick={handleClick}>Sign Up (Agent UI)</button>;
+      }
+      
+      return <button onClick={handleClick}>Sign Up</button>;
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Vue">
+    ```javascript
+    // agentDetection.js
+    import { ref, onMounted, onBeforeUnmount } from 'vue';
+    import mixpanel from 'mixpanel-browser';
+    import AgentDetector from '@superline-ai/agent-detection';
+    
+    export function useAgentDetection(mixpanelToken) {
+      const detectionResult = ref(null);
+      const isLoading = ref(true);
+      let timer = null;
+      let detector = null; // Hold detector instance
+      
+      onMounted(() => {
+        // Assuming providers are imported/created somewhere accessible
+        const metadataProvider = new BrowserMetadataProvider(); // Example
+        const eventsProvider = new BrowserEventProvider(); // Example
+        detector = new AgentDetector(metadataProvider, eventsProvider);
+        
+        // Initialize both libraries
+        mixpanel.init(mixpanelToken);
+        AgentDetector.init({ autoStart: true });
+        
+        // Setup detection
+        timer = setTimeout(async () => {
+          try {
+            const result = await detector.finalizeDetection();
+            detectionResult.value = result;
+            
+            // Send to Mixpanel
+            mixpanel.people.set({
+              'Is Agent': result.isAgent,
+              'Agent Confidence': result.confidence
+            });
+            
+            mixpanel.register({
+              'Is Agent': result.isAgent,
+              'Agent Confidence': result.confidence
+            });
+          } catch (error) {
+            console.error(error);
+          } finally {
+            isLoading.value = false;
+          }
+        }, 5000);
+      });
+      
+      onBeforeUnmount(() => {
+        if (timer) clearTimeout(timer);
+      });
+      
+      const track = (eventName, props = {}) => {
+        if (detectionResult.value) {
+          props.is_agent = detectionResult.value.isAgent;
+        }
+        mixpanel.track(eventName, props);
+      };
+      
+      return {
+        detectionResult,
+        isLoading,
+        track
+      };
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+1. **Wait For Sufficient Data**: Allow 3-5 seconds of user interaction before finalizing detection
+2. **Register Super Properties**: Use Mixpanel's super properties to automatically include agent information in all events
+3. **Create Segment Comparisons**: Always compare key metrics between human and AI segments
+4. **Use Cohorts**: Create saved cohorts for humans and agents to easily apply these segments in any report
+5. **Consider Confidence Thresholds**: For uncertain cases (confidence around 0.4-0.6), you may want to create a third "uncertain" segment based on the `Agent Confidence` property, or adjust the initial detection threshold using the `init` option.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Google Analytics Integration"
+    icon="chart-line"
+    href="/guides/google-analytics"
+  >
+    Learn how to integrate with Google Analytics
+  </Card>
+  <Card
+    title="Custom Analytics"
+    icon="gear"
+    href="/guides/custom-analytics"
+  >
+    Integrate with other analytics platforms
+  </Card>
+</CardGroup> 

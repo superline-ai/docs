@@ -1,0 +1,636 @@
+---
+title: 'Custom Analytics Integration'
+description: 'How to integrate Superline Agent Detection with any analytics platform'
+---
+
+# Custom Analytics Integration
+
+This guide shows you how to integrate Superline Agent Detection with any analytics platform of your choice, beyond the specific integrations we've covered for Google Analytics and Mixpanel.
+
+## Universal Integration Approach
+
+Regardless of which analytics platform you're using, the core integration pattern remains similar: detect AI agents and include this information in your analytics data. Here's a universal approach that works with any platform.
+
+<Steps>
+  <Step title="Initialize Agent Detection">
+    First, initialize Superline Agent Detection early in your application:
+    
+    ```javascript
+    import AgentDetector from '@superline-ai/agent-detection';
+    // Assuming providers are imported/created:
+    // const metadataProvider = new BrowserMetadataProvider();
+    // const eventsProvider = new BrowserEventProvider();
+    const detector = new AgentDetector(metadataProvider, eventsProvider);
+    
+    // Initialize with automatic data collection
+    AgentDetector.init({
+      debug: false,
+      autoStart: true
+    });
+    ```
+  </Step>
+  
+  <Step title="Create Detection Function">
+    Create a function that performs detection and returns the result:
+    
+    ```javascript
+    async function detectAgent() {
+      try {
+        // Allow sufficient time for data collection before calling
+        // Assuming 'detector' instance is accessible here
+        const result = await detector.finalizeDetection();
+        return {
+          isAgent: result.isAgent,
+          confidence: result.confidence
+        };
+      } catch (error) {
+        console.error('Agent detection error:', error);
+        return null;
+      }
+    }
+    ```
+  </Step>
+  
+  <Step title="Integrate with Your Analytics">
+    Call the detection function at the appropriate time and add the result to your analytics platform:
+    
+    ```javascript
+    // Wait for sufficient data collection
+    setTimeout(async () => {
+      const agentData = await detectAgent();
+      
+      if (agentData) {
+        // Send to your analytics platform
+        // This is a generic example - adapt it to your specific platform
+        analytics.identify({
+          isAgent: agentData.isAgent,
+          agentConfidence: agentData.confidence
+        });
+        
+        // Set as global property for future events
+        analytics.setGlobalProperty('isAgent', agentData.isAgent);
+      }
+    }, 5000); // 5 seconds delay
+    ```
+  </Step>
+</Steps>
+
+## Platform-Specific Examples
+
+Here are integration examples for several popular analytics platforms:
+
+<AccordionGroup>
+  <Accordion title="Segment">
+    ```javascript
+    import Analytics from 'analytics';
+    import segmentPlugin from '@analytics/segment';
+    import AgentDetector from '@superline-ai/agent-detection';
+    // Assuming providers are imported/created:
+    // const metadataProvider = new BrowserMetadataProvider();
+    // const eventsProvider = new BrowserEventProvider();
+    
+    // Initialize analytics with Segment
+    const analytics = Analytics({
+      app: 'your-app-name',
+      plugins: [
+        segmentPlugin({
+          writeKey: 'YOUR_SEGMENT_WRITE_KEY'
+        })
+      ]
+    });
+    
+    // Initialize agent detection
+    const detector = new AgentDetector(metadataProvider, eventsProvider);
+    AgentDetector.init({ autoStart: true });
+    
+    // After sufficient data collection
+    setTimeout(async () => {
+      const result = await detector.finalizeDetection();
+      
+      // Identify with agent information
+      analytics.identify({
+        isAgent: result.isAgent,
+        agentConfidence: result.confidence
+      });
+      
+      // Track detection event
+      analytics.track('Agent Detection Complete', {
+        isAgent: result.isAgent,
+        agentConfidence: result.confidence
+      });
+    }, 5000);
+    ```
+  </Accordion>
+  
+  <Accordion title="Amplitude">
+    ```javascript
+    import * as amplitude from '@amplitude/analytics-browser';
+    import AgentDetector from '@superline-ai/agent-detection';
+    // Assuming providers are imported/created:
+    // const metadataProvider = new BrowserMetadataProvider();
+    // const eventsProvider = new BrowserEventProvider();
+    
+    // Initialize Amplitude
+    amplitude.init('YOUR_AMPLITUDE_API_KEY');
+    
+    // Initialize agent detection
+    const detector = new AgentDetector(metadataProvider, eventsProvider);
+    AgentDetector.init({ autoStart: true });
+    
+    // After sufficient data collection
+    setTimeout(async () => {
+      const result = await detector.finalizeDetection();
+      
+      // Set user properties
+      amplitude.setUserProperties({
+        isAgent: result.isAgent,
+        agentConfidence: result.confidence
+      });
+      
+      // Track detection event
+      amplitude.track('Agent Detection Complete', {
+        isAgent: result.isAgent,
+        agentConfidence: result.confidence
+      });
+    }, 5000);
+    ```
+  </Accordion>
+  
+  <Accordion title="Plausible">
+    ```javascript
+    import AgentDetector from '@superline-ai/agent-detection';
+    // Assuming providers are imported/created:
+    // const metadataProvider = new BrowserMetadataProvider();
+    // const eventsProvider = new BrowserEventProvider();
+    
+    // Initialize agent detection
+    const detector = new AgentDetector(metadataProvider, eventsProvider);
+    AgentDetector.init({ autoStart: true });
+    
+    // Custom Plausible event function
+    function plausibleEvent(eventName, props = {}) {
+      if (window.plausible) {
+        window.plausible(eventName, { props });
+      }
+    }
+    
+    // After sufficient data collection
+    setTimeout(async () => {
+      const result = await detector.finalizeDetection();
+      
+      // Track agent detection event
+      plausibleEvent('Agent Detection', {
+        isAgent: result.isAgent,
+        agentConfidence: result.confidence
+      });
+      
+      // Enhance future event tracking
+      const originalPlausible = window.plausible;
+      window.plausible = function(eventName, options = {}) {
+        // Add agent data to all events
+        if (!options.props) options.props = {};
+        options.props.isAgent = result.isAgent;
+        
+        // Call original function
+        originalPlausible(eventName, options);
+      };
+    }, 5000);
+    ```
+  </Accordion>
+  
+  <Accordion title="Adobe Analytics">
+    ```javascript
+    import AgentDetector from '@superline-ai/agent-detection';
+    // Assuming providers are imported/created:
+    // const metadataProvider = new BrowserMetadataProvider();
+    // const eventsProvider = new BrowserEventProvider();
+    
+    // Initialize agent detection
+    const detector = new AgentDetector(metadataProvider, eventsProvider);
+    AgentDetector.init({ autoStart: true });
+    
+    // After sufficient data collection
+    setTimeout(async () => {
+      const result = await detector.finalizeDetection();
+      
+      // Set custom variables in Adobe Analytics
+      if (window.s) {
+        // Set eVar for agent detection
+        window.s.eVar1 = result.isAgent ? "AI Agent" : "Human";
+        window.s.eVar2 = result.confidence.toString();
+        
+        // Track event
+        window.s.events = "event1";
+        window.s.prop1 = "Agent Detection";
+        
+        // Send data to Adobe Analytics
+        window.s.t();
+      }
+    }, 5000);
+    ```
+  </Accordion>
+  
+  <Accordion title="Custom Backend API">
+    ```javascript
+    import AgentDetector from '@superline-ai/agent-detection';
+    // Assuming providers are imported/created:
+    // const metadataProvider = new BrowserMetadataProvider();
+    // const eventsProvider = new BrowserEventProvider();
+    
+    // Initialize agent detection
+    const detector = new AgentDetector(metadataProvider, eventsProvider);
+    AgentDetector.init({ autoStart: true });
+    
+    // Function to send data to your custom analytics backend
+    async function trackToCustomBackend(eventName, data) {
+      try {
+        const response = await fetch('https://your-analytics-api.com/events', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer YOUR_API_KEY'
+          },
+          body: JSON.stringify({
+            event: eventName,
+            timestamp: new Date().toISOString(),
+            sessionId: getSessionId(),
+            data
+          })
+        });
+        
+        return response.ok;
+      } catch (error) {
+        console.error('Analytics tracking error:', error);
+        return false;
+      }
+    }
+    
+    // Helper function to get/create session ID
+    function getSessionId() {
+      let sessionId = localStorage.getItem('analytics_session_id');
+      if (!sessionId) {
+        sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('analytics_session_id', sessionId);
+      }
+      return sessionId;
+    }
+    
+    // After sufficient data collection
+    setTimeout(async () => {
+      const result = await detector.finalizeDetection();
+      
+      // Track to your custom backend
+      trackToCustomBackend('agent_detection', {
+        isAgent: result.isAgent,
+        agentConfidence: result.confidence,
+        userAgent: navigator.userAgent,
+        url: window.location.href
+      });
+      
+      // Store result for future events
+      localStorage.setItem('agent_detection_result', JSON.stringify({
+        isAgent: result.isAgent,
+        confidence: result.confidence
+      }));
+    }, 5000);
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Creating a Universal Analytics Wrapper
+
+For larger applications that need a consistent analytics interface across multiple pages/components, consider creating a universal analytics wrapper that incorporates agent detection:
+
+```javascript
+// analytics.js
+import AgentDetector from '@superline-ai/agent-detection';
+// Assuming providers are imported/created:
+// const metadataProvider = new BrowserMetadataProvider();
+// const eventsProvider = new BrowserEventProvider();
+
+class Analytics {
+  constructor(options = {}) {
+    this.providers = options.providers || [];
+    this.detectionComplete = false;
+    this.agentData = null;
+    this.eventQueue = [];
+    this.detector = null; // Hold detector instance
+    
+    // Initialize agent detection
+    // Assuming providers are available
+    this.detector = new AgentDetector(metadataProvider, eventsProvider);
+    this.AgentDetector.init({ autoStart: true });
+    
+    // Set up detection
+    setTimeout(this.detectAgent.bind(this), options.detectionDelay || 5000);
+  }
+  
+  async detectAgent() {
+    try {
+      const result = await this.detector.finalizeDetection();
+      this.agentData = {
+        isAgent: result.isAgent,
+        confidence: result.confidence
+      };
+      
+      // Track detection event
+      this.track('AgentDetectionComplete', this.agentData);
+      
+      // Process queued events
+      this.detectionComplete = true;
+      this.processQueue();
+      
+      return this.agentData;
+    } catch (error) {
+      console.error('Agent detection error:', error);
+      this.detectionComplete = true;
+      this.processQueue();
+      return null;
+    }
+  }
+  
+  processQueue() {
+    while (this.eventQueue.length > 0) {
+      const { eventName, properties } = this.eventQueue.shift();
+      this.trackToProviders(eventName, properties);
+    }
+  }
+  
+  track(eventName, properties = {}) {
+    // Add agent data if available
+    if (this.agentData) {
+      properties = {
+        ...properties,
+        isAgent: this.agentData.isAgent,
+        agentConfidence: this.agentData.confidence
+      };
+      
+      // Track immediately
+      this.trackToProviders(eventName, properties);
+    } else if (this.detectionComplete) {
+      // Detection tried but failed, track anyway
+      this.trackToProviders(eventName, properties);
+    } else {
+      // Queue the event for later
+      this.eventQueue.push({ eventName, properties });
+    }
+  }
+  
+  trackToProviders(eventName, properties) {
+    // Send to all configured providers
+    this.providers.forEach(provider => {
+      try {
+        provider.track(eventName, properties);
+      } catch (error) {
+        console.error(`Error tracking to provider ${provider.name}:`, error);
+      }
+    });
+  }
+  
+  // Add a new analytics provider
+  addProvider(provider) {
+    this.providers.push(provider);
+  }
+}
+
+// Example provider implementations
+export const GoogleAnalyticsProvider = {
+  name: 'Google Analytics',
+  track: (eventName, properties) => {
+    if (window.gtag) {
+      window.gtag('event', eventName, properties);
+    }
+  }
+};
+
+export const MixpanelProvider = {
+  name: 'Mixpanel',
+  track: (eventName, properties) => {
+    if (window.mixpanel) {
+      window.mixpanel.track(eventName, properties);
+    }
+  }
+};
+
+export default Analytics;
+```
+
+Usage of this wrapper:
+
+```javascript
+import Analytics, { GoogleAnalyticsProvider, MixpanelProvider } from './analytics';
+
+// Initialize with your preferred providers
+const analytics = new Analytics({
+  providers: [
+    GoogleAnalyticsProvider,
+    MixpanelProvider,
+    // Add your custom providers
+    {
+      name: 'Custom Backend',
+      track: (eventName, properties) => {
+        // Your custom implementation
+        fetch('https://your-api.com/track', {
+          method: 'POST',
+          body: JSON.stringify({ eventName, properties })
+        });
+      }
+    }
+  ],
+  detectionDelay: 5000 // 5 seconds
+});
+
+// Track events as usual
+analytics.track('PageView', { page: '/home' });
+analytics.track('ButtonClick', { buttonId: 'signup-button' });
+
+// Agent data will be automatically added once detection is complete
+```
+
+## Best Practices for Any Platform
+
+Regardless of which analytics platform you're using, follow these best practices:
+
+<CardGroup cols={2}>
+  <Card title="Consistent Property Names" icon="tag">
+    Use consistent property names across all events (e.g., always use `isAgent` rather than mixing `is_agent`, `isBot`, etc.)
+  </Card>
+  <Card title="Include Confidence" icon="gauge">
+    Always include the confidence for nuanced analysis.
+  </Card>
+  <Card title="Delay Detection" icon="clock">
+    Wait 3-5 seconds before performing detection to allow sufficient data collection
+  </Card>
+  <Card title="Graceful Fallbacks" icon="life-ring">
+    Handle detection failures gracefully to ensure analytics continue to work even if detection fails
+  </Card>
+</CardGroup>
+
+## Advanced Topics
+
+<AccordionGroup>
+  <Accordion title="Real-time Dashboards">
+    For real-time monitoring of human vs. AI traffic:
+    
+    1. Send detection results to a real-time data processing system like Firebase, Supabase, or a custom WebSocket server
+    2. Build a dashboard that shows current traffic breakdowns
+    3. Set up alerts for unusual patterns in agent traffic
+    
+    ```javascript
+    // Example with Firebase
+    import { initializeApp } from 'firebase/app';
+    import { getDatabase, ref, set } from 'firebase/database';
+    import AgentDetector from '@superline-ai/agent-detection';
+    // Assuming providers/detector instance are available
+    // const detector = new AgentDetector(...);
+    // AgentDetector.init(...);
+    
+    // Initialize Firebase
+    const firebaseApp = initializeApp({
+      // your firebase config
+    });
+    
+    const db = getDatabase(firebaseApp);
+    
+    // After detection
+    const result = await detector.finalizeDetection();
+    
+    // Update real-time dashboard data
+    set(ref(db, 'traffic/' + Date.now()), {
+      timestamp: new Date().toISOString(),
+      isAgent: result.isAgent,
+      confidence: result.confidence,
+      page: window.location.pathname,
+      referrer: document.referrer
+    });
+    ```
+  </Accordion>
+  
+  <Accordion title="Session Stitching">
+    For multi-page applications, ensure consistent agent detection across pages:
+    
+    ```javascript
+    // At the start of each page load
+    import AgentDetector from '@superline-ai/agent-detection';
+    // Assuming providers are imported/created:
+    // const metadataProvider = new BrowserMetadataProvider();
+    // const eventsProvider = new BrowserEventProvider();
+    let detector = null; // Hold detector instance
+    
+    function initializeDetection() {
+      // Check if we have a previous detection result
+      const savedResult = localStorage.getItem('agent_detection_result');
+      
+      if (savedResult) {
+        // Use the existing result for immediate classification
+        const parsed = JSON.parse(savedResult);
+        console.log('Using cached detection result:', parsed);
+        
+        // Still perform detection in the background to improve accuracy
+        if (!detector) {
+           const metadataProvider = new BrowserMetadataProvider(); // Example
+           const eventsProvider = new BrowserEventProvider(); // Example
+           detector = new AgentDetector(metadataProvider, eventsProvider);
+        }
+        AgentDetector.init({ autoStart: true });
+        
+        setTimeout(async () => {
+          // Update the stored result with fresh detection
+          const result = await detector.finalizeDetection();
+          localStorage.setItem('agent_detection_result', JSON.stringify({
+            isAgent: result.isAgent,
+            confidence: result.confidence,
+            lastUpdated: new Date().toISOString()
+          }));
+        }, 5000);
+        
+        return parsed;
+      } else {
+        // No existing result, perform new detection
+        if (!detector) {
+           const metadataProvider = new BrowserMetadataProvider(); // Example
+           const eventsProvider = new BrowserEventProvider(); // Example
+           detector = new AgentDetector(metadataProvider, eventsProvider);
+        }
+        AgentDetector.init({ autoStart: true });
+        
+        // Return a promise that resolves when detection is complete
+        return new Promise((resolve) => {
+          setTimeout(async () => {
+            const result = await detector.finalizeDetection();
+            
+            // Store for future page loads
+            localStorage.setItem('agent_detection_result', JSON.stringify({
+              isAgent: result.isAgent,
+              confidence: result.confidence,
+              lastUpdated: new Date().toISOString()
+            }));
+            
+            resolve(result);
+          }, 5000);
+        });
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="A/B Testing Integration">
+    Ensure A/B tests consider agent status:
+    
+    ```javascript
+    // Example with Google Optimize or similar
+    // Assuming detector instance is available
+    async function initializeExperiments() {
+      // Get agent detection result first
+      const result = await detector.finalizeDetection();
+      
+      // Only include real users in experiments
+      if (!result.isAgent) {
+        // Initialize your A/B testing tool
+        initializeOptimize();
+        
+        // Activate experiments
+        activateExperiments();
+      } else {
+        // For agents, show the default experience
+        console.log('Agent detected, showing default experience');
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you've learned how to integrate Superline Agent Detection with any analytics platform, consider exploring our other guides:
+
+<CardGroup cols={2}>
+  <Card
+    title="Google Analytics Integration"
+    icon="chart-line"
+    href="/guides/google-analytics"
+  >
+    Detailed steps for Google Analytics integration
+  </Card>
+  <Card
+    title="Mixpanel Integration"
+    icon="chart-mixed"
+    href="/guides/mixpanel"
+  >
+    Detailed steps for Mixpanel integration
+  </Card>
+  <Card
+    title="Custom Extractors"
+    icon="puzzle-piece"
+    href="/guides/custom-extractors"
+  >
+    Learn how to create custom feature extractors
+  </Card>
+  <Card
+    title="React Integration"
+    icon="react"
+    href="/guides/react-integration"
+  >
+    Integrate Superline Agent Detection with React applications
+  </Card>
+</CardGroup> 

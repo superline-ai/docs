@@ -1,0 +1,91 @@
+---
+title: 'Overview'
+description: 'Understanding how Superline Agent Detection works'
+---
+
+# Agent Detection Overview
+
+Superline Agent Detection provides real-time detection of AI agents in browser sessions using metadata and behavioral patterns. This page provides an overview of how the library works and its key components.
+
+## How It Works
+
+<Steps>
+  <Step title="Feature Extraction">
+    The library extracts features from browser metadata and user behavior (mouse movements, keyboard patterns, scroll behavior, clicks)
+  </Step>
+  <Step title="Data Processing">
+    Extracted features are processed through standardization, normalization, and one-hot encoding where appropriate
+  </Step>
+  <Step title="Model Scoring">
+    A logistic regression model analyzes the processed features to calculate a detection probability
+  </Step>
+  <Step title="Classification">
+    The probability value is compared to a threshold to classify the session as human or AI agent
+  </Step>
+</Steps>
+
+## Key Components
+
+<AccordionGroup>
+  <Accordion title="Agent Detector" icon="magnifying-glass">
+    The core component that manages the detection process, including initialization, data collection, and result generation. This is your main point of interaction with the library.
+    
+    ```javascript
+    // Example of creating and using the Agent Detector
+    const detector = new AgentDetector(metadataProvider, eventsProvider);
+    AgentDetector.init({ debug: false, autoStart: true });
+    const result = await detector.finalizeDetection();
+    ```
+  </Accordion>
+  
+  <Accordion title="Feature Extractors" icon="filter">
+    Components that collect and analyze different aspects of the browser session. The library includes extractors for browser metadata, mouse events, keyboard events, scroll events, and click events.
+    
+    Each extractor focuses on a specific aspect of user behavior and contributes specific features to the detection model.
+  </Accordion>
+  
+  <Accordion title="Detection Model" icon="brain">
+    A logistic regression model that processes the extracted features to calculate a confidence. The model is trained on a large dataset of labeled browser sessions from both humans and AI agents.
+    
+    The model parameters (weights and intercepts/bias) are included in the library, making it work "out of the box" without requiring server-side processing.
+  </Accordion>
+  
+  <Accordion title="Environment System" icon="server">
+    A pluggable system that adapts the library to different operational contexts. The default browser environment provides real-time event collection, while a replay environment is available for offline analysis.
+  </Accordion>
+  
+  <Accordion title="Storage System" icon="database">
+    A system for persisting events and metadata during the detection process. The default implementation uses IndexedDB in browser environments to ensure data is available across page loads.
+  </Accordion>
+</AccordionGroup>
+
+## Detection Result
+
+When you call `detector.finalizeDetection()` or `detector.getCurrentDetectionResult()`, you receive a detection result with the following structure:
+
+```javascript
+{
+  isAgent: boolean,     // True if the session is classified as an AI agent
+  confidence: number,   // Probability prediction between 0 and 1
+  features?: any        // Preprocessed features used for scoring (optional)
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Detection Model"
+    icon="brain"
+    href="/core-concepts/detection-model"
+  >
+    Learn more about how the detection model works
+  </Card>
+  <Card
+    title="Feature Extraction"
+    icon="filter"
+    href="/core-concepts/feature-extraction"
+  >
+    Understand how features are extracted and processed
+  </Card>
+</CardGroup> 

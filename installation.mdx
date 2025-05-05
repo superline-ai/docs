@@ -1,0 +1,104 @@
+---
+title: 'Installation'
+description: 'Detailed installation guide for Superline Agent Detection'
+---
+
+## Installation Methods
+
+Superline Agent Detection can be integrated into your project using various methods, depending on your preferred package manager or project setup.
+
+### Package Managers
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @superline-ai/agent-detection
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @superline-ai/agent-detection
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @superline-ai/agent-detection
+    ```
+  </Tab>
+</Tabs>
+
+### CDN / Script Tag
+
+You can also include Superline Agent Detection directly in your HTML using a script tag:
+
+```html
+<head>
+  <!-- Add the script with defer attribute to ensure it loads after the DOM -->
+  <script src="https://cdn.jsdelivr.net/npm/@superline-ai/agent-detection/dist/umd/index.umd.js" defer></script>
+</head>
+```
+
+<Note>
+  When using the script tag method, the library is exposed as a global `agentDetector` object.
+</Note>
+
+## Importing the Library
+
+After installation, you can import the library into your project in different ways:
+
+### ES Modules (Recommended)
+
+```javascript
+import AgentDetector from '@superline-ai/agent-detection';
+```
+
+### CommonJS
+
+```javascript
+const AgentDetector = require('@superline-ai/agent-detection');
+```
+
+## Framework-specific Installation
+
+### React
+
+For React applications, you can create a custom hook for easy integration:
+
+```javascript
+// useAgentDetection.js
+import { useState, useEffect } from 'react';
+import AgentDetector from '@superline-ai/agent-detection';
+
+export function useAgentDetection() {
+  const [detectionResult, setDetectionResult] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Initialize the detector when the component mounts
+    AgentDetector.init({
+      debug: false,
+      autoStart: true
+    });
+
+    // Check for AI agent after a delay to allow data collection
+    const timer = setTimeout(async () => {
+      try {
+        const result = await AgentDetector.finalizeDetection();
+        setDetectionResult(result);
+      } catch (error) {
+        console.error('Agent detection error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 5000); // 5 seconds delay
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  return { detectionResult, isLoading };
+}
+```
+
+## Next Steps
+
+Now that you have installed Superline Agent Detection, check out our [Quick Start](/quickstart) guide to learn how to use the library in your application, or explore the [API Reference](/api-reference/agent-detector) for detailed information about the available methods and options. 

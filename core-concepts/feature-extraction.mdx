@@ -1,0 +1,169 @@
+---
+title: 'Feature Extraction'
+description: 'Understanding how features are collected and processed for AI agent detection'
+---
+
+# Feature Extraction System
+
+The feature extraction system is a core component of Superline Agent Detection that collects and processes data from browser sessions to identify patterns that distinguish between human users and AI agents.
+
+## Feature Extraction Architecture
+
+The library uses a modular extraction system with multiple specialized extractors that each focus on different aspects of user behavior.
+
+## Default Extractors
+
+Superline Agent Detection comes with five built-in extractors:
+
+<AccordionGroup>
+  <Accordion title="Browser Metadata Extractor" icon="browser">
+    Collects environment data such as:
+    
+    - User agent string
+    - Screen dimensions and orientation
+    - Device pixel ratio
+    - Color depth
+    - Browser language
+    - Time zone information
+    - Platform details
+    
+    These features help identify unusual or inconsistent browser configurations that may indicate an AI agent.
+  </Accordion>
+  
+  <Accordion title="Mouse Event Extractor" icon="arrow-pointer">
+    Analyzes mouse movements and patterns including:
+    
+    - Movement speed and acceleration
+    - Direction changes and curvature
+    - Hover behavior
+    - Movement patterns and distribution
+    - Start and stop characteristics
+    
+    Human mouse movements typically have natural irregularities and acceleration patterns, while AI agents often exhibit more uniform or simplified movement patterns.
+  </Accordion>
+  
+  <Accordion title="Keyboard Event Extractor" icon="keyboard">
+    Tracks keyboard patterns such as:
+    
+    - Typing speed and rhythm
+    - Key press duration
+    - Inter-key intervals
+    - Common vs. uncommon key combinations
+    - Correction patterns
+    
+    Humans typically have distinctive typing rhythms and error patterns, while AI agents may show unnatural consistency or irregularity.
+  </Accordion>
+  
+  <Accordion title="Scroll Event Extractor" icon="arrows-up-down">
+    Monitors scroll behavior including:
+    
+    - Scroll speed and acceleration
+    - Scroll depth and direction changes
+    - Pause patterns between scrolls
+    - Scrollbar vs. wheel vs. touchpad scroll detection
+    
+    Human scroll patterns typically align with content consumption patterns, while AI agents may exhibit more mechanical or content-independent scroll behaviors.
+  </Accordion>
+  
+  <Accordion title="Click Event Extractor" icon="hand-pointer">
+    Captures click patterns such as:
+    
+    - Click timing and distribution
+    - Click precision relative to targets
+    - Double-click behavior
+    - Click pressure and duration
+    - Click location heatmap
+    
+    Humans typically click with slight imprecision and variability, while AI agents may show too-perfect precision or unnatural patterns.
+  </Accordion>
+</AccordionGroup>
+
+## Feature Processing
+
+Raw features collected by extractors undergo several processing steps:
+
+<Steps>
+  <Step title="Feature Collection">
+    Extractors collect raw data from user interactions and browser environment
+  </Step>
+  <Step title="Statistical Aggregation">
+    Raw events are aggregated into statistical features (e.g., mean, variance, distribution metrics)
+  </Step>
+  <Step title="Normalization">
+    Features are normalized to comparable scales, often using standardization (z-scores) or min-max scaling
+  </Step>
+  <Step title="Transformation">
+    Some features undergo non-linear transformations to improve their predictive power
+  </Step>
+  <Step title="Feature Selection">
+    Only the most discriminative features are selected for the final model
+  </Step>
+</Steps>
+
+## Custom Extractors
+
+<Note>
+  Documentation for creating custom feature extractors is currently under development.
+  
+  However, the library supports extending its capabilities by creating your own extractor classes. These classes should inherit from a base `FeatureExtractor` class (details forthcoming) and implement the required methods for initialization, data collection, and feature computation.
+
+  You can then pass your custom extractor constructors in the `extractorClasses` array within the `AgentDetector.init()` options. Providing this array will replace the default set of extractors.
+
+  ```javascript
+  // Conceptual example
+  import { DEFAULT_EXTRACTORS } from '@superline-ai/agent-detection';
+  import MyCustomExtractor from './my-custom-extractor';
+
+  AgentDetector.init({
+    // To add to defaults:
+    // extractorClasses: [...DEFAULT_EXTRACTORS, MyCustomExtractor],
+    
+    // To replace defaults:
+    extractorClasses: [MyCustomExtractor]
+  });
+  ```
+</Note>
+
+## Features Table
+
+The following table shows some of the key features used by the detection model:
+
+| Feature Category | Example Features | Description |
+|------------------|------------------|-------------|
+| Browser Metadata | User agent, Screen dimensions | Identify unusual browser configurations |
+| Mouse Movements | Movement speed, Curvature | Analyze natural vs. artificial movements |
+| Keyboard Patterns | Typing rhythm, Key press duration | Detect human typing patterns |
+| Scroll Behavior | Scroll speed, Pause patterns | Identify content consumption patterns |
+| Click Patterns | Click precision, Click timing | Detect natural click behavior |
+
+## Privacy Considerations
+
+The feature extraction system is designed with privacy in mind:
+
+- No personal information is collected or stored
+- Raw data stays local to the browser
+- Only aggregated statistical features are used for detection
+- No cross-site tracking or fingerprinting for tracking purposes
+
+<Callout type="info">
+  All extracted features are used solely for the purpose of distinguishing between human users and AI agents, not for tracking users across sites or sessions.
+</Callout>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Detection Model"
+    icon="brain"
+    href="/core-concepts/detection-model"
+  >
+    Learn how extracted features are processed by the detection model
+  </Card>
+  <Card
+    title="Custom Extractors"
+    icon="puzzle-piece"
+    href="/guides/custom-extractors"
+  >
+    Learn how to create and use custom extractors
+  </Card>
+</CardGroup> 

@@ -1,0 +1,284 @@
+---
+title: 'Configuration'
+description: 'API reference for configuration options in Superline Agent Detection'
+---
+
+# Configuration Options
+
+Superline Agent Detection provides various configuration options to customize its behavior according to your needs. This page details all available configuration options passed to the `AgentDetector.init()` method.
+
+For constructor options (`metadataProvider`, `eventsProvider`, `eventStorage`, `throttleConfig`), see the [AgentDetector constructor documentation](/api-reference/agent-detector#constructor).
+
+## AgentDetectorInitOptions
+
+The configuration object passed to the `AgentDetector.init()` method.
+
+<ResponseField name="debug" type="boolean" default="false">
+  Enables debug mode, which:
+  
+  - Logs detailed information about the detection process to the console
+  - Includes raw extracted features in the detection result
+  - Provides more verbose error messages
+  
+  Useful during development and troubleshooting, but should be disabled in production.
+  
+  ```javascript
+  AgentDetector.init({ debug: true });
+  ```
+</ResponseField>
+
+<ResponseField name="autoStart" type="boolean" default="true">
+  Determines whether the detection process should start automatically after initialization.
+  
+  - When `true`, event listeners are attached and data collection begins immediately
+  - When `false`, you need to call `detector.startDetection()` manually to begin collection
+  
+  ```javascript
+  // Initialize without starting
+  AgentDetector.init({ autoStart: false });
+  
+  // Later, start manually
+  detector.startDetection();
+  ```
+</ResponseField>
+
+<ResponseField name="extractorClasses" type="ExtractorClass[]" optional>
+  Array of custom feature extractor classes to use instead of the default ones. Defaults to `DEFAULT_EXTRACTORS`.
+  
+  Each extractor class must extend the `FeatureExtractor` base class (or similar) and be provided as a constructor.
+  
+  ```javascript
+  import AgentDetector from '@superline-ai/agent-detection';
+  import CustomExtractor from './my-custom-extractor';
+  
+  AgentDetector.init({
+    extractorClasses: [CustomExtractor]
+  });
+  ```
+  
+  <Expandable title="Custom Extractor Structure (Conceptual)">
+    ```javascript
+    import { FeatureExtractor } from '@superline-ai/agent-detection'; // Assuming path
+    
+    export class CustomExtractor extends FeatureExtractor {
+      constructor(metadataProvider, eventsProvider) {
+        super(metadataProvider, eventsProvider, 'custom');
+      }
+      
+      initialize() {
+        // Setup event listeners or initialize data
+        return true;
+      }
+      
+      cleanup() {
+        // Remove event listeners or cleanup
+      }
+      
+      extractFeatures() {
+        // Return extracted features
+        return {
+          hasData: true,
+          error: false,
+          features: {
+             myFeature1: 0.75,
+             myFeature2: 'value'
+          }
+        };
+      }
+    }
+    ```
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="onDetection" type="(result: DetectionResult) => void" optional>
+  Callback function invoked when detection results are available, typically after calling `finalizeDetection()` or `getCurrentDetectionResult()`.
+  
+  ```javascript
+  function handleDetection(result) {
+     console.log(`Detected agent: ${result.isAgent}, Confidence: ${result.confidence}`);
+  }
+  
+  AgentDetector.init({
+    onDetection: handleDetection
+  });
+  ```
+</ResponseField>
+
+<ResponseField name="throttleConfig" type="ThrottleConfig" optional>
+  Overrides the throttle configuration provided in the constructor for this instance.
+  Used to control the rate at which high-frequency events (like mouse movements) are processed.
+
+  <Expandable title="ThrottleConfig properties">
+    <ResponseField name="mouseMoveThrottleMs" type="number" default="50">
+       Minimum time in milliseconds between processing mouse move events.
+    </ResponseField>
+    <ResponseField name="scrollThrottleMs" type="number" default="100">
+       Minimum time in milliseconds between processing scroll events.
+    </ResponseField>
+    <ResponseField name="keyboardThrottleMs" type="number" default="20">
+       Minimum time in milliseconds between processing keyboard events.
+    </ResponseField>
+    <ResponseField name="clickThrottleMs" type="number" default="10">
+       Minimum time in milliseconds between processing click events.
+    </ResponseField>
+  </Expandable>
+
+  ```javascript
+  AgentDetector.init({
+    throttleConfig: {
+      mouseMoveThrottleMs: 100, // Sample mouse moves less frequently
+      scrollThrottleMs: 150
+    }
+  });
+  ```
+</ResponseField>
+
+<ResponseField name="threshold" type="number" optional default="0.5">
+  The probability threshold (0-1) for classifying a session as an AI agent.
+  
+  - If the calculated probability confidence is >= threshold, `isAgent` will be `true`
+  - If the confidence is < threshold, `isAgent` will be `false`
+  
+  Adjusting this threshold lets you control the balance between false positives and false negatives based on the `confidence` value.
+  
+  ```javascript
+  // More strict classification (fewer false positives, more false negatives)
+  AgentDetector.init({ threshold: 0.7 });
+  
+  // More lenient classification (more false positives, fewer false negatives)
+  AgentDetector.init({ threshold: 0.3 });
+  ```
+</ResponseField>
+
+## Configuration Examples
+
+<CodeGroup>
+  ```javascript Default Config
+  // Initialize with default options
+  AgentDetector.init();
+  ```
+  
+  ```javascript Debug Mode
+  // Enable debug mode
+  AgentDetector.init({
+    debug: true,
+    autoStart: true // Explicitly setting default
+  });
+  ```
+  
+  ```javascript Custom Extractors Only
+  import MyCustomExtractor1 from './my-custom-extractor1';
+  import MyCustomExtractor2 from './my-custom-extractor2';
+  
+  // Use only custom extractors (implicitly replaces defaults)
+  AgentDetector.init({
+    extractorClasses: [MyCustomExtractor1, MyCustomExtractor2]
+  });
+  ```
+  
+  ```javascript Detection Callback
+  // Provide a callback for detection results
+  AgentDetector.init({
+    onDetection: (result) => {
+      if (result.isAgent) {
+        console.warn('Agent detected!', result.confidence);
+      }
+    }
+  });
+  ```
+  
+  ```javascript Custom Throttle
+  // Adjust throttling for performance
+  AgentDetector.init({
+    throttleConfig: {
+      mouseMoveThrottleMs: 200,
+      scrollThrottleMs: 200
+      // keep other defaults
+    }
+  });
+  ```
+
+  ```javascript Custom Threshold
+  // Use a higher threshold for stricter agent detection
+  AgentDetector.init({
+    threshold: 0.75 // Default is 0.5
+  });
+  ```
+
+  ```javascript Complete Custom Config
+  import CustomExtractor from './my-custom-extractor';
+  
+  function myDetectionHandler(result) {
+    // Send to analytics, etc.
+  }
+  
+  // Comprehensive custom configuration
+  AgentDetector.init({
+    debug: true,
+    autoStart: false,
+    threshold: 0.6, // Set custom threshold
+    extractorClasses: [CustomExtractor], // Use only this custom one
+    onDetection: myDetectionHandler,
+    throttleConfig: {
+      mouseMoveThrottleMs: 100,
+      scrollThrottleMs: 150,
+      keyboardThrottleMs: 50,
+      clickThrottleMs: 20
+    }
+  });
+  ```
+</CodeGroup>
+
+## Best Practices
+
+<Accordion title="Production vs. Development">
+  - Use `debug: true` during development to diagnose issues and inspect features.
+  - Ensure `debug: false` in production for optimal performance and cleaner logs.
+</Accordion>
+
+<Accordion title="Performance Considerations">
+  - Using default extractors and throttle settings provides a good balance.
+  - If performance issues arise on low-end devices, consider increasing `throttleConfig` values (e.g., `mouseMoveThrottleMs`) to reduce processing load.
+  - Providing only necessary custom extractors via `extractorClasses` can also improve performance if default ones are not needed.
+</Accordion>
+
+<Accordion title="Threshold Adjustment">
+  - The default threshold (0.5) used to set `isAgent` works well for many applications.
+  - You can adjust this threshold using the `threshold` option in `init()`.
+  - Increase threshold (e.g., 0.7) if false positives (humans marked as agents) are problematic.
+  - Decrease threshold (e.g., 0.3) if false negatives (agents marked as humans) are problematic.
+  - Consider your application's specific needs and tolerance for misclassification when adjusting.
+  - Always analyze the raw `confidence` in your analytics for the most nuanced understanding.
+</Accordion>
+
+<Accordion title="Extractor Management">
+  - By default, the library uses a set of core extractors (`DEFAULT_EXTRACTORS`).
+  - Providing `extractorClasses` replaces the default set entirely. If you want to *add* to the defaults, you need to explicitly include the defaults in your array:
+    ```javascript
+    import { DEFAULT_EXTRACTORS } from '@superline-ai/agent-detection';
+    import MyCustomExtractor from './my-custom-extractor';
+
+    AgentDetector.init({
+      extractorClasses: [...DEFAULT_EXTRACTORS, MyCustomExtractor]
+    });
+    ```
+</Accordion>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Agent Detector"
+    icon="magnifying-glass"
+    href="/api-reference/agent-detector"
+  >
+    Explore the main Agent Detector API methods
+  </Card>
+  <Card
+    title="Detection Result"
+    icon="file-code"
+    href="/api-reference/detection-result"
+  >
+    Understand the object returned by detection methods
+  </Card>
+</CardGroup> 

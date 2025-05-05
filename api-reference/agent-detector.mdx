@@ -1,0 +1,289 @@
+---
+title: 'Agent Detector'
+description: 'API reference for the AgentDetector class'
+---
+
+# AgentDetector
+
+The `AgentDetector` is the main entry point for interacting with the Superline Agent Detection library. It manages the initialization, configuration, and detection process.
+
+You need to create an instance of this class, providing necessary providers.
+
+## Constructor
+
+Creates a new agent detector instance.
+
+```typescript
+new AgentDetector(
+  metadataProvider: MetadataPort,
+  eventsProvider: EventPort,
+  eventStorage?: IEventStorage, // Optional, defaults to BrowserEventStorage
+  throttleConfig?: ThrottleConfig // Optional, defaults to DEFAULT_THROTTLE_CONFIG
+)
+```
+
+<Expandable title="Parameters">
+  <ResponseField name="metadataProvider" type="MetadataPort" required>
+    Provider for browser metadata, used to gather information about the browser environment.
+  </ResponseField>
+  <ResponseField name="eventsProvider" type="EventPort" required>
+    Provider for user interaction events like mouse movements, clicks, keyboard input.
+  </ResponseField>
+  <ResponseField name="eventStorage" type="IEventStorage" optional>
+    Optional storage for event persistence between sessions. Defaults to `BrowserEventStorage`.
+  </ResponseField>
+  <ResponseField name="throttleConfig" type="ThrottleConfig" optional>
+    Optional configuration for event throttling. Defaults to `DEFAULT_THROTTLE_CONFIG`.
+  </ResponseField>
+</Expandable>
+
+<CodeGroup>
+  ```javascript Basic Usage
+  import AgentDetector from '@superline-ai/agent-detection';
+  import { BrowserMetadataProvider, BrowserEventProvider } from '@superline-ai/agent-detection/providers'; // Assuming provider paths
+  
+  const metadataProvider = new BrowserMetadataProvider();
+  const eventsProvider = new BrowserEventProvider();
+  
+  const detector = new AgentDetector(metadataProvider, eventsProvider);
+  ```
+</CodeGroup>
+
+## Instance Methods
+
+### init
+
+Initializes the agent detector instance with the provided configuration.
+
+```typescript
+init(options?: AgentDetectorInitOptions): AgentDetector
+```
+
+<Expandable title="Parameters">
+  <ResponseField name="options" type="AgentDetectorInitOptions" optional>
+    Configuration options for the detector.
+    
+    <Expandable title="AgentDetectorInitOptions properties">
+      <ResponseField name="debug" type="boolean" default="false">
+        When true, enables detailed logging and includes raw features in detection results.
+      </ResponseField>
+      
+      <ResponseField name="autoStart" type="boolean" default="true">
+        When true, automatically starts the detection process after initialization.
+      </ResponseField>
+      
+      <ResponseField name="extractorClasses" type="ExtractorClass[]" optional>
+        Array of custom extractor classes to use instead of the default ones. Defaults to `DEFAULT_EXTRACTORS`.
+      </ResponseField>
+
+      <ResponseField name="onDetection" type="(result: DetectionResult) => void" optional>
+        Callback function that will be invoked when detection results are available (e.g., after calling `finalizeDetection` or `getCurrentDetectionResult`).
+      </ResponseField>
+      
+      <ResponseField name="throttleConfig" type="ThrottleConfig" optional>
+        Overrides the throttle configuration provided in the constructor.
+      </ResponseField>
+
+      <ResponseField name="threshold" type="number" optional default="0.5">
+         The probability threshold (0-1) for classifying a session as an AI agent. If `confidence >= threshold`, then `isAgent` will be `true`.
+      </ResponseField>
+
+    </Expandable>
+  </ResponseField>
+</Expandable>
+
+<CodeGroup>
+  ```javascript Basic Usage
+  // detector instance created as shown in constructor example
+  
+  // Initialize with default options
+  AgentDetector.init();
+  ```
+  
+  ```javascript Custom Configuration
+  import CustomExtractor from './my-custom-extractor';
+
+  function handleDetection(result) {
+    console.log('Detection result:', result);
+  }
+  
+  // Initialize with custom configuration
+  AgentDetector.init({
+    debug: true,
+    autoStart: false,
+    extractorClasses: [CustomExtractor],
+    onDetection: handleDetection,
+    threshold: 0.7 // Stricter threshold
+  });
+  ```
+</CodeGroup>
+
+### startDetection
+
+Starts the detection process, initializing all extractors and beginning data collection.
+
+```typescript
+startDetection(): AgentDetector
+```
+
+<CodeGroup>
+  ```javascript Usage
+  // detector instance created and initialized (with autoStart: false)
+  AgentDetector.init({ autoStart: false });
+  
+  // Start collection manually
+  detector.startDetection();
+  ```
+</CodeGroup>
+
+### getCurrentDetectionResult
+
+Gets the current detection result based on data collected so far. Does not stop the detection process or remove event listeners.
+
+```typescript
+getCurrentDetectionResult(): Promise<DetectionResult>
+```
+
+<Expandable title="Returns">
+  <ResponseField name="Promise<DetectionResult>" type="Promise">
+    A promise that resolves to the current DetectionResult object.
+    <Expandable title="DetectionResult properties">
+      <ResponseField name="isAgent" type="boolean">
+        True if the session is classified as an AI agent.
+      </ResponseField>
+      
+      <ResponseField name="confidence" type="number">
+        Predicted Probability/Confidence between 0 and 1, with higher values indicating higher likelihood of being an AI agent.
+      </ResponseField>
+      
+      <ResponseField name="features" type="Record<string, any>" optional>
+        The combined features used for scoring. Included based on internal logic, potentially always available.
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+</Expandable>
+
+<CodeGroup>
+  ```javascript Usage
+  // detector instance created and initialized
+  AgentDetector.init();
+  // (wait for some interaction)
+  
+  async function checkCurrentStatus() {
+    const result = await detector.getCurrentDetectionResult();
+    console.log('Current isAgent:', result.isAgent);
+    console.log('Current Confidence:', result.confidence);
+  }
+  
+  // Call periodically or on demand
+  setInterval(checkCurrentStatus, 10000); 
+  ```
+</CodeGroup>
+
+### finalizeDetection
+
+Finalizes the detection process, computes a final result based on collected data, and cleans up listeners. Stops collecting new events but keeps the current session data.
+
+```typescript
+finalizeDetection(): Promise<DetectionResult>
+```
+
+<Expandable title="Returns">
+  <ResponseField name="Promise<DetectionResult>" type="Promise">
+    A promise that resolves to the final DetectionResult object.
+    <Expandable title="DetectionResult properties">
+       <ResponseField name="isAgent" type="boolean">
+        True if the session is classified as an AI agent.
+      </ResponseField>
+      
+      <ResponseField name="confidence" type="number">
+        Predicted Probability/Confidence between 0 and 1, with higher values indicating higher likelihood of being an AI agent.
+      </ResponseField>
+      
+      <ResponseField name="features" type="Record<string, any>" optional>
+         The combined features used for scoring. Included based on internal logic, potentially always available.
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+</Expandable>
+
+<CodeGroup>
+  ```javascript Basic Usage
+  // detector instance created and initialized
+  AgentDetector.init();
+  
+  // Later, get final detection result
+  async function checkAgent() {
+    // Ensure sufficient time for data collection
+    await new Promise(resolve => setTimeout(resolve, 5000)); 
+    
+    const result = await detector.finalizeDetection();
+    console.log('Final isAgent:', result.isAgent);
+    console.log('Final Confidence:', result.confidence);
+    
+    // Note: Detection is stopped after this call
+  }
+  
+  checkAgent();
+  ```
+</CodeGroup>
+
+### cleanup
+
+Cleans up all resources used by the agent detector instance. Stops all event listeners and clears stored session events.
+
+```typescript
+cleanup(): void
+```
+
+<CodeGroup>
+  ```javascript Usage
+  // detector instance created and initialized
+  AgentDetector.init();
+  
+  // When the detector is no longer needed (e.g., component unmount)
+  detector.cleanup();
+  ```
+</CodeGroup>
+
+### cleanupOldEvents
+
+Cleans up old events from storage based on age. Helps manage storage size.
+
+```typescript
+cleanupOldEvents(maxAgeMs?: number): Promise<void>
+```
+
+<Expandable title="Parameters">
+  <ResponseField name="maxAgeMs" type="number" optional default="86400000 (24 hours)">
+    Maximum age of events to keep in milliseconds.
+  </ResponseField>
+</Expandable>
+
+<CodeGroup>
+  ```javascript Usage
+  // detector instance created
+  
+  // Clean up events older than 1 week
+  detector.cleanupOldEvents(7 * 24 * 60 * 60 * 1000);
+  ```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Detection Result"
+    icon="file-code"
+    href="/api-reference/detection-result"
+  >
+    Learn more about the detection result object
+  </Card>
+  <Card
+    title="Configuration"
+    icon="gear"
+    href="/api-reference/configuration"
+  >
+    Explore all configuration options for the init method
+  </Card>
+</CardGroup> 

@@ -1,0 +1,162 @@
+---
+title: 'Detection Result'
+description: 'API reference for the DetectionResult object'
+---
+
+# DetectionResult
+
+The `DetectionResult` object contains the outcome of the agent detection process. It's returned by the `detector.finalizeDetection()` and `detector.getCurrentDetectionResult()` methods and provides information about whether the current session is classified as an AI agent.
+
+## Properties
+
+<ResponseField name="isAgent" type="boolean" required>
+  Indicates whether the current session is classified as an AI agent based on the default threshold (0.5).
+  
+  - `true`: The session is classified as an AI agent (confidence >= 0.5)
+  - `false`: The session is classified as a human user (confidence < 0.5)
+</ResponseField>
+
+<ResponseField name="confidence" type="number" required>
+  The predicted probability/confidence from the detection model, ranging from 0 to 1.
+  
+  - Higher values (closer to 1) indicate higher likelihood of being an AI agent
+  - Lower values (closer to 0) indicate higher likelihood of being a human user
+  
+  This value represents the model's calculated probability that the session is from an AI agent.
+</ResponseField>
+
+<ResponseField name="features" type="Record<string, any>" optional>
+  The combined, preprocessed features used for scoring.
+  
+  This property contains the feature values *after* preprocessing (standardization, one-hot encoding, etc.) that were fed into the model.
+  It can be useful for debugging or understanding the model's decision, especially when `debug: true` is enabled in the `init` options.
+</ResponseField>
+
+## Example Result
+
+```javascript
+// Example detection result
+{
+  isAgent: true,
+  confidence: 0.87,
+  // features object contains preprocessed values
+  features: {
+    mouse_move_speed_mean: 1.23, // Standardized value
+    has_touch_screen: 0, // Boolean converted to number
+    browser_name_chrome: 1, // One-hot encoded category
+    browser_name_firefox: 0,
+    // ... other preprocessed features
+  }
+}
+```
+
+## Using the Result
+
+<CodeGroup>
+  ```javascript Basic Usage
+  // detector instance created and initialized
+  AgentDetector.init();
+  
+  // Later, get the detection result
+  async function checkAgent() {
+    const result = await detector.finalizeDetection();
+    
+    if (result.isAgent) {
+      console.log('AI agent detected with confidence:', result.confidence);
+      // Handle agent scenario
+    } else {
+      console.log('Human user detected with confidence:', result.confidence);
+      // Handle human scenario
+    }
+  }
+  ```
+  
+  ```javascript With Analytics
+  // detector instance created and initialized
+  AgentDetector.init();
+  
+  // Later, integrate with analytics
+  async function trackUserType() {
+    const result = await detector.finalizeDetection();
+    
+    // Send to Google Analytics
+    gtag('set', 'user_properties', {
+      is_agent: result.isAgent,
+      agent_confidence: result.confidence
+    });
+    
+    // Or send to Mixpanel
+    mixpanel.people.set({
+      'Is Agent': result.isAgent,
+      'Agent Confidence': result.confidence
+      // Confidence is not available in the result object
+    });
+  }
+  ```
+  
+  ```javascript Debug Features
+  // detector instance created and initialized with debug: true
+  AgentDetector.init({ debug: true });
+  
+  // Later, analyze features
+  async function analyzeFeatures() {
+    const result = await detector.finalizeDetection();
+    
+    console.log('Is agent:', result.isAgent);
+    console.log('Confidence:', result.confidence);
+    
+    // Access and analyze preprocessed features
+    if (result.features) {
+      console.log('Preprocessed Features:', result.features);
+      
+      // Example: Log specific feature values
+      console.log('Mouse Speed Mean (Standardized):', result.features.mouse_move_speed_mean);
+      console.log('Browser (Chrome - OHE):', result.features.browser_name_chrome);
+    }
+  }
+  ```
+</CodeGroup>
+
+## Interpretation Guidelines
+
+When interpreting detection results, consider the following guidelines:
+
+<Accordion title="Confidence Thresholds">
+  - **confidence < 0.3**: Strong indication of human user
+  - **0.3 ≤ confidence < 0.5**: Likely human user
+  - **0.5 ≤ confidence < 0.7**: Uncertain, could be either human or agent
+  - **0.7 ≤ confidence < 0.9**: Likely AI agent
+  - **confidence ≥ 0.9**: Strong indication of AI agent
+  
+  The library uses a default classification threshold of 0.5 to set the `isAgent` boolean. You might adjust your application's response based on the `confidence` value for more nuanced handling.
+</Accordion>
+
+<Accordion title="Edge Cases">
+  Some scenarios may lead to less reliable detection:
+  
+  - Very short sessions with limited interaction (less data for extractors)
+  - Users with assistive technologies that modify input patterns
+  - Unusual input devices (e.g., trackballs, graphics tablets) or browser configurations
+  - High network latency affecting event timing
+  
+  Consider these factors when making critical decisions based on detection results.
+</Accordion>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Agent Detector"
+    icon="magnifying-glass"
+    href="/api-reference/agent-detector"
+  >
+    Explore the main Agent Detector API
+  </Card>
+  <Card
+    title="Configuration"
+    icon="gear"
+    href="/api-reference/configuration"
+  >
+    Learn about configuration options for the `init` method
+  </Card>
+</CardGroup> 
