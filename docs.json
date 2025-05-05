@@ -63,7 +63,7 @@
         },
         {
           "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
+          "href": "https://superline.ai/blog",
           "icon": "newspaper"
         }
       ]
@@ -77,7 +77,7 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:devs@superline.ai"
       }
     ],
     "primary": {
