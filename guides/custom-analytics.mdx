@@ -17,11 +17,7 @@ Regardless of which analytics platform you're using, the core integration patter
     
     ```javascript
     import AgentDetector from '@superline-ai/agent-detection';
-    // Assuming providers are imported/created:
-    // const metadataProvider = new BrowserMetadataProvider();
-    // const eventsProvider = new BrowserEventProvider();
-    const detector = new AgentDetector(metadataProvider, eventsProvider);
-    
+
     // Initialize with automatic data collection
     AgentDetector.init({
       debug: false,
@@ -38,7 +34,7 @@ Regardless of which analytics platform you're using, the core integration patter
       try {
         // Allow sufficient time for data collection before calling
         // Assuming 'detector' instance is accessible here
-        const result = await detector.finalizeDetection();
+        const result = await AgentDetector.finalizeDetection();
         return {
           isAgent: result.isAgent,
           confidence: result.confidence
@@ -100,12 +96,11 @@ Here are integration examples for several popular analytics platforms:
     });
     
     // Initialize agent detection
-    const detector = new AgentDetector(metadataProvider, eventsProvider);
     AgentDetector.init({ autoStart: true });
     
     // After sufficient data collection
     setTimeout(async () => {
-      const result = await detector.finalizeDetection();
+      const result = await AgentDetector.finalizeDetection();
       
       // Identify with agent information
       analytics.identify({
@@ -134,12 +129,11 @@ Here are integration examples for several popular analytics platforms:
     amplitude.init('YOUR_AMPLITUDE_API_KEY');
     
     // Initialize agent detection
-    const detector = new AgentDetector(metadataProvider, eventsProvider);
     AgentDetector.init({ autoStart: true });
     
     // After sufficient data collection
     setTimeout(async () => {
-      const result = await detector.finalizeDetection();
+      const result = await AgentDetector.finalizeDetection();
       
       // Set user properties
       amplitude.setUserProperties({
@@ -164,7 +158,6 @@ Here are integration examples for several popular analytics platforms:
     // const eventsProvider = new BrowserEventProvider();
     
     // Initialize agent detection
-    const detector = new AgentDetector(metadataProvider, eventsProvider);
     AgentDetector.init({ autoStart: true });
     
     // Custom Plausible event function
@@ -176,7 +169,7 @@ Here are integration examples for several popular analytics platforms:
     
     // After sufficient data collection
     setTimeout(async () => {
-      const result = await detector.finalizeDetection();
+      const result = await AgentDetector.finalizeDetection();
       
       // Track agent detection event
       plausibleEvent('Agent Detection', {
@@ -206,12 +199,11 @@ Here are integration examples for several popular analytics platforms:
     // const eventsProvider = new BrowserEventProvider();
     
     // Initialize agent detection
-    const detector = new AgentDetector(metadataProvider, eventsProvider);
     AgentDetector.init({ autoStart: true });
     
     // After sufficient data collection
     setTimeout(async () => {
-      const result = await detector.finalizeDetection();
+      const result = await AgentDetector.finalizeDetection();
       
       // Set custom variables in Adobe Analytics
       if (window.s) {
@@ -238,7 +230,6 @@ Here are integration examples for several popular analytics platforms:
     // const eventsProvider = new BrowserEventProvider();
     
     // Initialize agent detection
-    const detector = new AgentDetector(metadataProvider, eventsProvider);
     AgentDetector.init({ autoStart: true });
     
     // Function to send data to your custom analytics backend
@@ -277,7 +268,7 @@ Here are integration examples for several popular analytics platforms:
     
     // After sufficient data collection
     setTimeout(async () => {
-      const result = await detector.finalizeDetection();
+      const result = await AgentDetector.finalizeDetection();
       
       // Track to your custom backend
       trackToCustomBackend('agent_detection', {
@@ -327,7 +318,7 @@ class Analytics {
   
   async detectAgent() {
     try {
-      const result = await this.detector.finalizeDetection();
+      const result = await this.AgentDetector.finalizeDetection();
       this.agentData = {
         isAgent: result.isAgent,
         confidence: result.confidence
@@ -481,8 +472,7 @@ Regardless of which analytics platform you're using, follow these best practices
     import { initializeApp } from 'firebase/app';
     import { getDatabase, ref, set } from 'firebase/database';
     import AgentDetector from '@superline-ai/agent-detection';
-    // Assuming providers/detector instance are available
-    // const detector = new AgentDetector(...);
+
     // AgentDetector.init(...);
     
     // Initialize Firebase
@@ -493,7 +483,7 @@ Regardless of which analytics platform you're using, follow these best practices
     const db = getDatabase(firebaseApp);
     
     // After detection
-    const result = await detector.finalizeDetection();
+    const result = await AgentDetector.finalizeDetection();
     
     // Update real-time dashboard data
     set(ref(db, 'traffic/' + Date.now()), {
@@ -536,7 +526,7 @@ Regardless of which analytics platform you're using, follow these best practices
         
         setTimeout(async () => {
           // Update the stored result with fresh detection
-          const result = await detector.finalizeDetection();
+          const result = await AgentDetector.finalizeDetection();
           localStorage.setItem('agent_detection_result', JSON.stringify({
             isAgent: result.isAgent,
             confidence: result.confidence,
@@ -557,7 +547,7 @@ Regardless of which analytics platform you're using, follow these best practices
         // Return a promise that resolves when detection is complete
         return new Promise((resolve) => {
           setTimeout(async () => {
-            const result = await detector.finalizeDetection();
+            const result = await AgentDetector.finalizeDetection();
             
             // Store for future page loads
             localStorage.setItem('agent_detection_result', JSON.stringify({
@@ -582,7 +572,7 @@ Regardless of which analytics platform you're using, follow these best practices
     // Assuming detector instance is available
     async function initializeExperiments() {
       // Get agent detection result first
-      const result = await detector.finalizeDetection();
+      const result = await AgentDetector.finalizeDetection();
       
       // Only include real users in experiments
       if (!result.isAgent) {

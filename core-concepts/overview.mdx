@@ -32,9 +32,8 @@ Superline Agent Detection provides real-time detection of AI agents in browser s
     
     ```javascript
     // Example of creating and using the Agent Detector
-    const detector = new AgentDetector(metadataProvider, eventsProvider);
     AgentDetector.init({ debug: false, autoStart: true });
-    const result = await detector.finalizeDetection();
+    const result = await AgentDetector.finalizeDetection();
     ```
   </Accordion>
   
@@ -61,7 +60,7 @@ Superline Agent Detection provides real-time detection of AI agents in browser s
 
 ## Detection Result
 
-When you call `detector.finalizeDetection()` or `detector.getCurrentDetectionResult()`, you receive a detection result with the following structure:
+When you call `AgentDetector.finalizeDetection()` or `AgentDetector.getCurrentDetectionResult()`, you receive a detection result with the following structure:
 
 ```javascript
 {

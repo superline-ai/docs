@@ -5,7 +5,7 @@ description: 'API reference for the DetectionResult object'
 
 # DetectionResult
 
-The `DetectionResult` object contains the outcome of the agent detection process. It's returned by the `detector.finalizeDetection()` and `detector.getCurrentDetectionResult()` methods and provides information about whether the current session is classified as an AI agent.
+The `DetectionResult` object contains the outcome of the agent detection process. It's returned by the `AgentDetector.finalizeDetection()` and `AgentDetector.getCurrentDetectionResult()` methods and provides information about whether the current session is classified as an AI agent.
 
 ## Properties
 
@@ -59,7 +59,7 @@ The `DetectionResult` object contains the outcome of the agent detection process
   
   // Later, get the detection result
   async function checkAgent() {
-    const result = await detector.finalizeDetection();
+    const result = await AgentDetector.finalizeDetection();
     
     if (result.isAgent) {
       console.log('AI agent detected with confidence:', result.confidence);
@@ -77,7 +77,7 @@ The `DetectionResult` object contains the outcome of the agent detection process
   
   // Later, integrate with analytics
   async function trackUserType() {
-    const result = await detector.finalizeDetection();
+    const result = await AgentDetector.finalizeDetection();
     
     // Send to Google Analytics
     gtag('set', 'user_properties', {
@@ -100,7 +100,7 @@ The `DetectionResult` object contains the outcome of the agent detection process
   
   // Later, analyze features
   async function analyzeFeatures() {
-    const result = await detector.finalizeDetection();
+    const result = await AgentDetector.finalizeDetection();
     
     console.log('Is agent:', result.isAgent);
     console.log('Confidence:', result.confidence);

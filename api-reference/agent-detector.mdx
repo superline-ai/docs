@@ -61,7 +61,7 @@ init(options?: AgentDetectorInitOptions): AgentDetector
 
 <Expandable title="Parameters">
   <ResponseField name="options" type="AgentDetectorInitOptions" optional>
-    Configuration options for the detector.
+    Configuration options for the AgentDetector.
     
     <Expandable title="AgentDetectorInitOptions properties">
       <ResponseField name="debug" type="boolean" default="false">
@@ -132,7 +132,7 @@ startDetection(): AgentDetector
   AgentDetector.init({ autoStart: false });
   
   // Start collection manually
-  detector.startDetection();
+  AgentDetector.startDetection();
   ```
 </CodeGroup>
 
@@ -170,7 +170,7 @@ getCurrentDetectionResult(): Promise<DetectionResult>
   // (wait for some interaction)
   
   async function checkCurrentStatus() {
-    const result = await detector.getCurrentDetectionResult();
+    const result = await AgentDetector.getCurrentDetectionResult();
     console.log('Current isAgent:', result.isAgent);
     console.log('Current Confidence:', result.confidence);
   }
@@ -217,7 +217,7 @@ finalizeDetection(): Promise<DetectionResult>
     // Ensure sufficient time for data collection
     await new Promise(resolve => setTimeout(resolve, 5000)); 
     
-    const result = await detector.finalizeDetection();
+    const result = await AgentDetector.finalizeDetection();
     console.log('Final isAgent:', result.isAgent);
     console.log('Final Confidence:', result.confidence);
     
@@ -242,7 +242,7 @@ cleanup(): void
   AgentDetector.init();
   
   // When the detector is no longer needed (e.g., component unmount)
-  detector.cleanup();
+  AgentDetector.cleanup();
   ```
 </CodeGroup>
 
@@ -265,7 +265,7 @@ cleanupOldEvents(maxAgeMs?: number): Promise<void>
   // detector instance created
   
   // Clean up events older than 1 week
-  detector.cleanupOldEvents(7 * 24 * 60 * 60 * 1000);
+  AgentDetector.cleanupOldEvents(7 * 24 * 60 * 60 * 1000);
   ```
 </CodeGroup>
 

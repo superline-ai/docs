@@ -44,12 +44,7 @@ By identifying and segmenting AI agent traffic using Superline Agent Detection, 
     
     // Initialize Superline Agent Detection
     import AgentDetector from '@superline-ai/agent-detection';
-    // Assuming providers are imported/created:
-    // import { BrowserMetadataProvider, BrowserEventProvider } from '...' 
-    // const metadataProvider = new BrowserMetadataProvider();
-    // const eventsProvider = new BrowserEventProvider();
     
-    const detector = new AgentDetector(metadataProvider, eventsProvider);
     AgentDetector.init({
       debug: false,
       autoStart: true
@@ -64,7 +59,7 @@ By identifying and segmenting AI agent traffic using Superline Agent Detection, 
     // Wait for enough interaction data to be collected
     setTimeout(async () => {
       // Get detection result
-      const result = await detector.finalizeDetection();
+      const result = await AgentDetector.finalizeDetection();
       
       // Set user property in GA4
       gtag('set', 'user_properties', {
@@ -154,7 +149,7 @@ async function detectAndSendToGA() {
   }
 
   // Get detection result
-  const result = await detector.finalizeDetection();
+  const result = await AgentDetector.finalizeDetection();
   
   // Set user properties
   gtag('set', 'user_properties', {
@@ -215,7 +210,7 @@ async function detectAndSendToGA() {
     
     ```javascript
     // Example: Only include non-agents in experiment
-    const result = await detector.finalizeDetection();
+    const result = await AgentDetector.finalizeDetection();
     
     if (!result.isAgent) {
       // Enroll in experiment
@@ -231,7 +226,7 @@ async function detectAndSendToGA() {
     
     ```javascript
     // Log high-confidence agent detections
-    const result = await detector.finalizeDetection();
+    const result = await AgentDetector.finalizeDetection();
     if (result.isAgent && result.confidence > 0.9) { 
       gtag('event', 'high_confidence_agent_visit', {
         page_path: window.location.pathname,

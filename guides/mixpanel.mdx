@@ -56,10 +56,7 @@ By integrating Superline Agent Detection with Mixpanel, you can:
     
     // Initialize Superline Agent Detection
     import AgentDetector from '@superline-ai/agent-detection';
-    // Assuming providers are imported/created:
-    // const metadataProvider = new BrowserMetadataProvider();
-    // const eventsProvider = new BrowserEventProvider();
-    const detector = new AgentDetector(metadataProvider, eventsProvider);
+
     AgentDetector.init({
       debug: false,
       autoStart: true
@@ -74,7 +71,7 @@ By integrating Superline Agent Detection with Mixpanel, you can:
     // Wait for enough interaction data
     setTimeout(async () => {
       // Get detection result
-      const result = await detector.finalizeDetection();
+      const result = await AgentDetector.finalizeDetection();
       
       // Set Mixpanel user properties
       mixpanel.people.set({
@@ -196,7 +193,7 @@ async function detectAndSendToMixpanel() {
   }
   
   // Get detection result
-  const result = await detector.finalizeDetection();
+  const result = await AgentDetector.finalizeDetection();
   
   // Set Mixpanel user properties
   mixpanel.people.set({
@@ -306,11 +303,6 @@ analytics.track('Button Clicked', {
       const [isLoading, setIsLoading] = useState(true);
       
       useEffect(() => {
-        // Assuming providers are imported/created somewhere accessible
-        const metadataProvider = new BrowserMetadataProvider(); // Example
-        const eventsProvider = new BrowserEventProvider(); // Example
-        const detector = new AgentDetector(metadataProvider, eventsProvider);
-        
         // Initialize both libraries
         mixpanel.init(mixpanelToken);
         AgentDetector.init({ autoStart: true });
@@ -318,7 +310,7 @@ analytics.track('Button Clicked', {
         // Setup detection
         const timer = setTimeout(async () => {
           try {
-            const result = await detector.finalizeDetection();
+            const result = await AgentDetector.finalizeDetection();
             setDetectionResult(result);
             
             // Send to Mixpanel
@@ -410,7 +402,7 @@ analytics.track('Button Clicked', {
         // Setup detection
         timer = setTimeout(async () => {
           try {
-            const result = await detector.finalizeDetection();
+            const result = await AgentDetector.finalizeDetection();
             detectionResult.value = result;
             
             // Send to Mixpanel

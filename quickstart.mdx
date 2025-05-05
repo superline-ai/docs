@@ -39,10 +39,6 @@ Superline Agent Detection is designed to be easy to integrate into any web appli
   <Tab title="ES Modules">
     ```javascript
     import AgentDetector from '@superline-ai/agent-detection';
-    // Assuming providers are imported/created:
-    // const metadataProvider = new BrowserMetadataProvider();
-    // const eventsProvider = new BrowserEventProvider();
-    const detector = new AgentDetector(metadataProvider, eventsProvider);
 
     // Initialize the detector
     AgentDetector.init({
@@ -52,7 +48,7 @@ Superline Agent Detection is designed to be easy to integrate into any web appli
     });
 
     // Later, when you want to check if the session is from an agent
-    const result = await detector.finalizeDetection();
+    const result = await AgentDetector.finalizeDetection();
     console.log('Is agent:', result.isAgent, 'Confidence:', result.confidence);
     ```
   </Tab>
@@ -60,12 +56,6 @@ Superline Agent Detection is designed to be easy to integrate into any web appli
     ```html
     <script defer>
       document.addEventListener('DOMContentLoaded', function() {
-        // Assuming providers are globally available or created
-        // const metadataProvider = new BrowserMetadataProvider();
-        // const eventsProvider = new BrowserEventProvider();
-        // The library instance needs to be created manually
-        const detector = new AgentDetector(metadataProvider, eventsProvider);
-        
         // Initialize it
         AgentDetector.init({
           debug: false,
@@ -74,7 +64,7 @@ Superline Agent Detection is designed to be easy to integrate into any web appli
         });
         
         // Later, check if the session is from an agent
-        detector.finalizeDetection()
+        AgentDetector.finalizeDetection()
           .then(result => {
             console.log('Is agent:', result.isAgent, 'Confidence:', result.confidence);
           });
@@ -90,7 +80,7 @@ You can easily integrate Superline Agent Detection with your analytics platform 
 
 ```javascript
 // After getting the detection result
-const result = await detector.finalizeDetection();
+const result = await AgentDetector.finalizeDetection();
 
 // Example with Google Analytics 4
 gtag('set', 'user_properties', {

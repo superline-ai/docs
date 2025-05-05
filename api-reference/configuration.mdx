@@ -31,14 +31,14 @@ The configuration object passed to the `AgentDetector.init()` method.
   Determines whether the detection process should start automatically after initialization.
   
   - When `true`, event listeners are attached and data collection begins immediately
-  - When `false`, you need to call `detector.startDetection()` manually to begin collection
+  - When `false`, you need to call `AgentDetector.startDetection()` manually to begin collection
   
   ```javascript
   // Initialize without starting
   AgentDetector.init({ autoStart: false });
   
   // Later, start manually
-  detector.startDetection();
+  AgentDetector.startDetection();
   ```
 </ResponseField>
 
