@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "Superline AI",
   "colors": {
-    "primary": "#1a94a3",
-    "light": "#1fb9cc",
-    "dark": "#14717D"
+    "primary": "#624C63",
+    "light": "#C5A4D1",
+    "dark": "#805e82"
   },
   "favicon": "/favicon.png",
   "navigation": {
